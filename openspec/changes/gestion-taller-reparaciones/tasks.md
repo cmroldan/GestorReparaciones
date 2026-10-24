@@ -6,7 +6,7 @@
 - [ ] 1.2 Configurar `pytest` con una base SQLite temporal por test y override de la dependencia de sesión, y verificar que un test de humo del endpoint de salud pasa con `pytest -q`.
 - [ ] 1.3 Crear la aplicación Angular con routing standalone, Angular Material y proxy de desarrollo hacia `/api/v1`, y verificar que `npm run build` finaliza sin errores.
 - [ ] 1.4 Documentar en `README.md` los requisitos, la instalación del backend y del frontend, la ejecución local y los comandos de prueba, y verificar que cada comando documentado se ejecuta tal como está escrito.
-- [ ] 1.5 Inicializar el repositorio Git, agregar un `.gitignore` para Python, Node, SQLite, entornos virtuales y builds, y verificar que `git status` no incluye `taller.db`, `node_modules`, `.venv`, `__pycache__` ni `dist`.
+- [x] 1.5 Inicializar el repositorio Git, agregar un `.gitignore` para Python, Node, SQLite, entornos virtuales y builds, y verificar que `git status` no incluye `taller.db`, `node_modules`, `.venv`, `__pycache__` ni `dist`.
 
 ## 2. Modelo de datos y migraciones
 
