@@ -1,0 +1,8 @@
+fastapi
+uvicorn[standard]
+SQLAlchemy>=2.0,<3
+alembic
+pydantic>=2.8,<3
+email-validator
+pytest
+httpx
