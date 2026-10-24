@@ -9,10 +9,13 @@ from app.exceptions import (
 from app.models import Client
 from app.models.base import utcnow
 from app.models.equipment import Equipment
-from app.models.enums import OrderStatus
+from app.models.enums import ItemType, MovementType, OrderStatus
+from app.models.item import Item
 from app.models.order_status_history import OrderStatusHistory
 from app.models.service_order import ServiceOrder
+from app.models.stock_movement import StockMovement
 from app.schemas.service_order import (
+    ConsumptionRead,
     OrderStatusHistoryRead,
     ServiceOrderCreate,
     ServiceOrderDetail,
@@ -20,6 +23,7 @@ from app.schemas.service_order import (
     ServiceOrderUpdate,
     WorkLogRead,
 )
+from app.services.stock import apply_stock_delta
 
 _MSG_CLIENTE_INEXISTENTE = "No existe el cliente solicitado."
 _MSG_EQUIPO_INEXISTENTE = "No existe el equipo solicitado."
@@ -33,6 +37,14 @@ _MSG_PRESUPUESTO_INCOMPLETO = (
 _MSG_ORDEN_ENTREGADA = "Una orden entregada no puede modificarse."
 _MSG_HISTORIAL_INMODIFICABLE = (
     "El historial de estados es de solo lectura y no puede modificarse."
+)
+_MSG_ORDEN_NO_EN_REPARACION = (
+    "Solo se pueden registrar consumos en órdenes en reparación."
+)
+_MSG_ITEM_INEXISTENTE = "No existe el ítem solicitado."
+_MSG_ITEM_NO_REPUESTO = "Solo se pueden consumir ítems de tipo repuesto."
+_MSG_CONSUMO_INMODIFICABLE = (
+    "Los consumos son de solo lectura y no pueden modificarse ni eliminarse."
 )
 
 ALLOWED_TRANSITIONS: dict[OrderStatus, set[OrderStatus]] = {
@@ -107,7 +119,10 @@ def get_order_detail(session: Session, order_id: int) -> ServiceOrderDetail:
             WorkLogRead.model_validate(row)
             for row in sorted(order.work_logs, key=lambda entry: (entry.created_at, entry.id))
         ],
-        consumptions=[],
+        consumptions=[
+            ConsumptionRead.from_movement(movement)
+            for movement in list_consumptions(session, order_id)
+        ],
     )
 
 
@@ -153,3 +168,53 @@ def delete_order(session: Session, order_id: int) -> None:
 def reject_history_mutation() -> None:
     """El historial de estados es append-only: no admite PATCH ni DELETE."""
     raise ReglaNegocioViolada(_MSG_HISTORIAL_INMODIFICABLE)
+
+
+def consume_part(
+    session: Session, order_id: int, item_id: int, quantity: int
+) -> StockMovement:
+    """Consuma un repuesto en una orden en reparación, descontando stock.
+
+    Delega la deducción atómica a `apply_stock_delta`; el stock insuficiente,
+    el ítem inexistente o inactivo fallan sin dejar movimientos ni consumos.
+    """
+    order = get_order(session, order_id)
+    if order.status is not OrderStatus.EN_REPARACION:
+        raise ReglaNegocioViolada(_MSG_ORDEN_NO_EN_REPARACION)
+    item = session.get(Item, item_id)
+    if item is None:
+        raise RecursoNoEncontrado(_MSG_ITEM_INEXISTENTE)
+    if item.type is not ItemType.PART:
+        raise ReglaNegocioViolada(_MSG_ITEM_NO_REPUESTO)
+
+    movement = apply_stock_delta(
+        session,
+        item_id=item_id,
+        movement_type=MovementType.ORDER_CONSUMPTION,
+        delta=-quantity,
+        reference_type="service_order",
+        reference_id=order.id,
+        require_active=True,
+    )
+    session.commit()
+    return movement
+
+
+def list_consumptions(session: Session, order_id: int) -> list[StockMovement]:
+    """Devuelve los consumos de la orden, ordenados cronológicamente."""
+    get_order(session, order_id)
+    query = (
+        select(StockMovement)
+        .where(
+            StockMovement.movement_type == MovementType.ORDER_CONSUMPTION,
+            StockMovement.reference_type == "service_order",
+            StockMovement.reference_id == order_id,
+        )
+        .order_by(StockMovement.created_at, StockMovement.id)
+    )
+    return list(session.scalars(query))
+
+
+def reject_consumption_mutation() -> None:
+    """Los consumos son append-only: no admiten PATCH ni DELETE."""
+    raise ReglaNegocioViolada(_MSG_CONSUMO_INMODIFICABLE)

@@ -5,6 +5,8 @@ from sqlalchemy.orm import Session
 
 from app.db import get_db
 from app.schemas.service_order import (
+    ConsumptionCreate,
+    ConsumptionRead,
     ServiceOrderCreate,
     ServiceOrderDetail,
     ServiceOrderRead,
@@ -36,6 +38,42 @@ def update_order(
     data: ServiceOrderUpdate, order_id: int, session: Session = Depends(get_db)
 ) -> "ServiceOrder":
     return orders_service.update_order(session, order_id, data)
+
+
+@router.post(
+    "/{order_id}/consumptions",
+    status_code=status.HTTP_201_CREATED,
+    response_model=ConsumptionRead,
+)
+def register_consumption(
+    order_id: int, data: ConsumptionCreate, session: Session = Depends(get_db)
+) -> ConsumptionRead:
+    movement = orders_service.consume_part(
+        session, order_id, data.item_id, data.quantity
+    )
+    return ConsumptionRead.from_movement(movement)
+
+
+@router.get("/{order_id}/consumptions", response_model=list[ConsumptionRead])
+def list_consumptions(
+    order_id: int, session: Session = Depends(get_db)
+) -> list[ConsumptionRead]:
+    movements = orders_service.list_consumptions(session, order_id)
+    return [ConsumptionRead.from_movement(movement) for movement in movements]
+
+
+@router.patch(
+    "/{order_id}/consumptions/{movement_id}", status_code=status.HTTP_400_BAD_REQUEST
+)
+def update_consumption(order_id: int, movement_id: int) -> None:
+    orders_service.reject_consumption_mutation()
+
+
+@router.delete(
+    "/{order_id}/consumptions/{movement_id}", status_code=status.HTTP_400_BAD_REQUEST
+)
+def delete_consumption(order_id: int, movement_id: int) -> None:
+    orders_service.reject_consumption_mutation()
 
 
 @router.delete("/{order_id}", status_code=status.HTTP_400_BAD_REQUEST)
