@@ -1,11 +1,12 @@
 import pytest
 from pydantic import ValidationError
 
-from app.models.enums import ItemType
+from app.models.enums import EquipmentType, ItemType
 from app.schemas.client import ClientCreate
+from app.schemas.equipment import EquipmentCreate
 from app.schemas.item import ItemCreate, ItemUpdate
 from app.schemas.sale import SaleCreate, SaleItemCreate
-from app.schemas.service_order import ServiceOrderUpdate
+from app.schemas.service_order import ConsumptionRead, ServiceOrderUpdate
 from app.schemas.stock_movement import StockMovementCreate
 
 
@@ -49,3 +50,33 @@ def test_stock_movement_sign_rules():
         StockMovementCreate(item_id=1, movement_type="adjustment", delta=0, reason="x")
     with pytest.raises(ValidationError):
         StockMovementCreate(item_id=1, movement_type="adjustment", delta=1)
+
+
+def test_item_create_requires_money_and_stock_fields():
+    with pytest.raises(ValidationError):
+        ItemCreate(code="X", name="X", type=ItemType.PART)
+    data = ItemCreate(code=" IT-1 ", name=" Tornillo ", type=ItemType.PART,
+                      price_cents=100, cost_cents=50, stock=10, min_stock=1)
+    assert data.code == "IT-1"
+    assert data.name == "Tornillo"
+
+
+def test_create_rejects_whitespace_only_required_strings():
+    with pytest.raises(ValidationError):
+        ItemCreate(code="   ", name="X", type=ItemType.PART,
+                   price_cents=1, cost_cents=0, stock=0, min_stock=0)
+    with pytest.raises(ValidationError):
+        ItemCreate(code="X", name="   ", type=ItemType.PART,
+                   price_cents=1, cost_cents=0, stock=0, min_stock=0)
+    with pytest.raises(ValidationError):
+        EquipmentCreate(client_id=1, type=EquipmentType.NOTEBOOK, brand="   ")
+
+
+def test_consumption_read_accepts_attributes():
+    from types import SimpleNamespace
+    from datetime import datetime, timezone
+    movement = SimpleNamespace(
+        item_id=1, item_code="IT-1", item_name="Tornillo",
+        quantity=2, created_at=datetime.now(timezone.utc),
+    )
+    assert ConsumptionRead.model_validate(movement).item_code == "IT-1"

@@ -100,6 +100,8 @@ class ConsumptionCreate(BaseModel):
 
 
 class ConsumptionRead(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     item_id: int
     item_code: str
     item_name: str

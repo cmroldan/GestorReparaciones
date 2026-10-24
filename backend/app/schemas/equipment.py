@@ -1,9 +1,9 @@
 from datetime import datetime
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator
+from pydantic import BaseModel, ConfigDict, field_validator
 
 from app.models.enums import EquipmentType
-from app.schemas.common import _normalize_optional_text
+from app.schemas.common import _normalize_optional_text, _normalize_required_text
 from app.schemas.service_order import ServiceOrderSummary
 
 
@@ -12,10 +12,15 @@ class EquipmentCreate(BaseModel):
 
     client_id: int
     type: EquipmentType
-    brand: str = Field(min_length=1)
+    brand: str
     model: str | None = None
     serial_number: str | None = None
     notes: str | None = None
+
+    @field_validator("brand")
+    @classmethod
+    def _brand_required(cls, value: str) -> str:
+        return _normalize_required_text(value)
 
     @field_validator("model", "serial_number", "notes")
     @classmethod

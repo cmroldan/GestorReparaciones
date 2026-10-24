@@ -24,6 +24,13 @@ def _normalize_email(email: str | None) -> str | None:
     return email
 
 
+def _normalize_required_text(value: str) -> str:
+    value = value.strip()
+    if not value:
+        raise ValueError("no puede estar vacío")
+    return value
+
+
 def _normalize_optional_text(value: str | None) -> str | None:
     if value is not None:
         value = value.strip() or None

@@ -1,21 +1,26 @@
 from datetime import datetime
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from app.models.enums import ItemType
-from app.schemas.common import Money
+from app.schemas.common import Money, _normalize_required_text
 
 
 class ItemCreate(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
-    code: str = Field(min_length=1)
-    name: str = Field(min_length=1)
+    code: str
+    name: str
     type: ItemType
-    price_cents: Money = 0
-    cost_cents: Money = 0
-    stock: Money = 0
-    min_stock: Money = 0
+    price_cents: Money
+    cost_cents: Money
+    stock: Money
+    min_stock: Money
+
+    @field_validator("code", "name")
+    @classmethod
+    def _required_text(cls, value: str) -> str:
+        return _normalize_required_text(value)
 
 
 class ItemUpdate(BaseModel):
