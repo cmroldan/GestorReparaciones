@@ -5,7 +5,7 @@ from sqlalchemy import Boolean, CheckConstraint, Integer, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db import Base
-from app.models.base import UTCDateTime, utcnow, sa_enum
+from app.models.base import UTCDateTime, enum_check, sa_enum, utcnow
 from app.models.enums import ItemType
 
 if TYPE_CHECKING:
@@ -18,6 +18,7 @@ SELLABLE_ITEM_TYPES = frozenset({ItemType.SUPPLY, ItemType.ACCESSORY})
 class Item(Base):
     __tablename__ = "items"
     __table_args__ = (
+        enum_check(ItemType, "items", "type"),
         CheckConstraint("price_cents >= 0", name="ck_items_price_cents_nonnegative"),
         CheckConstraint("cost_cents >= 0", name="ck_items_cost_cents_nonnegative"),
         CheckConstraint("stock >= 0", name="ck_items_stock_nonnegative"),

@@ -5,7 +5,7 @@ from sqlalchemy import ForeignKey, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db import Base
-from app.models.base import UTCDateTime, utcnow, sa_enum
+from app.models.base import UTCDateTime, enum_check, sa_enum, utcnow
 from app.models.enums import EquipmentType
 
 if TYPE_CHECKING:
@@ -15,6 +15,9 @@ if TYPE_CHECKING:
 
 class Equipment(Base):
     __tablename__ = "equipments"
+    __table_args__ = (
+        enum_check(EquipmentType, "equipments", "type"),
+    )
 
     id: Mapped[int] = mapped_column(primary_key=True)
     client_id: Mapped[int] = mapped_column(ForeignKey("clients.id"), nullable=False)

@@ -5,15 +5,17 @@ from sqlalchemy import CheckConstraint, ForeignKey, Integer, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db import Base
-from app.models.base import UTCDateTime, utcnow, sa_enum
+from app.models.base import UTCDateTime, enum_check, sa_enum, utcnow
 from app.models.enums import MovementType
 
 if TYPE_CHECKING:
     from app.models.item import Item
 
+
 class StockMovement(Base):
     __tablename__ = "stock_movements"
     __table_args__ = (
+        enum_check(MovementType, "stock_movements", "movement_type"),
         CheckConstraint("delta != 0", name="ck_stock_movements_delta_nonzero"),
         CheckConstraint("resulting_stock >= 0", name="ck_stock_movements_resulting_stock_nonnegative"),
     )

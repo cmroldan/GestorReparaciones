@@ -5,7 +5,7 @@ from sqlalchemy import CheckConstraint, ForeignKey, Integer, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db import Base
-from app.models.base import UTCDateTime, utcnow, sa_enum
+from app.models.base import UTCDateTime, enum_check, sa_enum, utcnow
 from app.models.enums import OrderStatus
 
 if TYPE_CHECKING:
@@ -18,11 +18,11 @@ if TYPE_CHECKING:
 class ServiceOrder(Base):
     __tablename__ = "service_orders"
     __table_args__ = (
-        CheckConstraint("status IN ('ingresado', 'en_diagnostico', 'presupuestado',"
-                        " 'en_reparacion', 'listo', 'entregado')",
-                        name="ck_service_orders_status_valid"),
+        enum_check(OrderStatus, "service_orders", "status"),
         CheckConstraint("budget_amount_cents IS NULL OR budget_amount_cents >= 0",
                         name="ck_service_orders_budget_amount_cents_nonnegative"),
+        # Garantía de diseño: SQLite no reutiliza ids aunque se borren filas.
+        {"sqlite_autoincrement": True},
     )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
