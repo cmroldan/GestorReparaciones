@@ -1,6 +1,5 @@
 from sqlalchemy import select, update
 from sqlalchemy.orm import Session
-
 from app.exceptions import (
     RecursoNoEncontrado,
     ReglaNegocioViolada,
@@ -18,14 +17,15 @@ _MSG_SIGNO_INVALIDO = "El signo del delta no corresponde al tipo de movimiento."
 
 
 def _validate_sign(movement_type: MovementType, delta: int) -> None:
-    if movement_type is MovementType.ENTRY and delta <= 0:
+    # Comparación por igualdad (no identidad): movement_type puede llegar
+    # como la cadena cruda ("entry", "sale", ...) al ser un Enum(str).
+    if movement_type == MovementType.ENTRY and delta <= 0:
         raise ReglaNegocioViolada(_MSG_SIGNO_INVALIDO)
-    if (
-        movement_type in (MovementType.SALE, MovementType.ORDER_CONSUMPTION)
-        and delta >= 0
+    if movement_type in (MovementType.SALE, MovementType.ORDER_CONSUMPTION) and (
+        delta >= 0
     ):
         raise ReglaNegocioViolada(_MSG_SIGNO_INVALIDO)
-    if movement_type is MovementType.ADJUSTMENT and delta == 0:
+    if movement_type == MovementType.ADJUSTMENT and delta == 0:
         raise ReglaNegocioViolada(_MSG_SIGNO_INVALIDO)
 
 
@@ -60,21 +60,22 @@ def apply_stock_delta(
     )
 
     if result.rowcount != 1:
-        item = session.get(Item, item_id)
+        # populate_existing: con expire_on_commit=False una instancia ya
+        # cargada puede estar desactualizada frente al UPDATE de Core.
+        item = session.get(Item, item_id, populate_existing=True)
         if item is None:
             raise RecursoNoEncontrado(_MSG_ITEM_INEXISTENTE)
         if require_active and not item.active:
             raise ReglaNegocioViolada(_MSG_ITEM_INACTIVO)
         raise StockInsuficiente(_MSG_STOCK_INSUFICIENTE)
 
-    resulting_stock = session.scalar(
-        select(Item.stock).where(Item.id == item_id)
-    )
+    # Refrescamos fuera de la caché y leemos el stock real de la DB.
+    item = session.get(Item, item_id, populate_existing=True)
     movement = StockMovement(
         item_id=item_id,
         movement_type=movement_type,
         delta=delta,
-        resulting_stock=resulting_stock,
+        resulting_stock=item.stock,
         reference_type=reference_type,
         reference_id=reference_id,
         reason=reason,
