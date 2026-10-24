@@ -1452,7 +1452,7 @@ git commit -m "feat: add angular scaffold, core models and services"
 ```typescript
 // client-form.component.spec.ts
 it('requires names and at least one contact', () => {
-  const form = new ClientFormComponent(fb, clientService, dialogRef);
+  const form = new ClientFormComponent(fb, clientService, dialogRef, { mode: 'create' });
   form.form.patchValue({ firstName: '', lastName: '', phone: '', email: '' });
   expect(form.form.invalid).toBeTrue();
   form.form.patchValue({ firstName: 'Ana', lastName: 'Pérez', phone: '3415551234' });
@@ -1461,6 +1461,7 @@ it('requires names and at least one contact', () => {
 
 // equipment-form.component.spec.ts
 it('offers only notebook, desktop and printer', () => {
+  const component = new EquipmentFormComponent(fb, equipmentService, dialogRef, { mode: 'create' });
   expect(component.types).toEqual(['notebook', 'desktop', 'printer']);
 });
 ```
@@ -1472,7 +1473,7 @@ Expected: FAIL because the components do not exist.
 
 - [ ] **Step 3: Implement the screens**
 
-Use standalone components and Angular Material. `ClientListComponent`: search input bound to `q`, table with name, document, phone, email, edit button and new button. `ClientFormComponent`: Reactive Form with `first_name`, `last_name`, `document`, `phone`, `email`, `address`; required names; email validator; group validator requiring phone or email; submit calls `create`/`update` and closes the dialog. `ClientDetailComponent`: loads `ClientDetail`, shows data and a table of equipments with `order_count`, plus a button to open `EquipmentFormComponent` in a dialog. `EquipmentFormComponent`: fields `type` (select with exactly the three types), `brand`, `model`, `serial_number`, `notes`; submit calls `create`/`update`. Add lazy routes in `app.routes.ts`.
+Use standalone components and Angular Material. `ClientListComponent`: search input bound to `q`, table with name, document, phone, email, edit button and new button. `ClientFormComponent`: Reactive Form with camelCase controls `firstName`, `lastName`, `document`, `phone`, `email`, `address`; `toPayload()` maps them to the snake_case API fields; required names; email validator; group validator requiring phone or email; submit calls `create`/`update` and closes the dialog. `ClientDetailComponent`: loads `ClientDetail`, shows data and a table of equipments with `order_count`, plus a button to open `EquipmentFormComponent` in a dialog. `EquipmentFormComponent`: fields `type` (select with exactly the three types), `brand`, `model`, `serial_number`, `notes`; submit calls `create`/`update`. Add lazy routes in `app.routes.ts`.
 
 - [ ] **Step 4: Run tests and build**
 
@@ -1512,7 +1513,7 @@ it('parses prices to cents and blocks direct stock edit on update', () => {
 
 // stock-movement-dialog.component.spec.ts
 it('requires a reason for adjustments', () => {
-  const dialog = new StockMovementDialogComponent(fb, itemService, dialogRef);
+  const dialog = new StockMovementDialogComponent(fb, itemService, dialogRef, { item: { id: 1 } });
   dialog.form.patchValue({ movementType: 'adjustment', delta: -1, reason: '' });
   expect(dialog.form.invalid).toBeTrue();
   dialog.form.patchValue({ reason: 'Rotura' });
@@ -1566,7 +1567,7 @@ it('exposes only the next valid status', () => {
 
 // order-form.component.spec.ts
 it('requires the reported failure', () => {
-  const form = new OrderFormComponent(fb, orderService, clientService, equipmentService, dialogRef);
+  const form = new OrderFormComponent(fb, orderService, clientService, equipmentService, dialogRef, { mode: 'create' });
   form.form.patchValue({ clientId: 1, equipmentId: 1, reportedFailure: '' });
   expect(form.form.invalid).toBeTrue();
   form.form.patchValue({ reportedFailure: 'No enciende' });
