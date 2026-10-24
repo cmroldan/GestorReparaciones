@@ -2,9 +2,11 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import CORS_ORIGINS
+from app.error_handlers import register_exception_handlers
 from app.routers import health
 
 app = FastAPI(title="Taller de Reparaciones")
+register_exception_handlers(app)
 
 app.add_middleware(
     CORSMiddleware,
