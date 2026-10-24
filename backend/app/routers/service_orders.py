@@ -9,6 +9,7 @@ from app.schemas.service_order import (
     ServiceOrderDetail,
     ServiceOrderRead,
     ServiceOrderUpdate,
+    StatusChange,
 )
 from app.services import orders as orders_service
 
@@ -40,3 +41,24 @@ def update_order(
 @router.delete("/{order_id}", status_code=status.HTTP_400_BAD_REQUEST)
 def delete_order(order_id: int, session: Session = Depends(get_db)) -> None:
     orders_service.delete_order(session, order_id)
+
+
+@router.post("/{order_id}/status", response_model=ServiceOrderRead)
+def change_status(
+    order_id: int, data: StatusChange, session: Session = Depends(get_db)
+) -> "ServiceOrder":
+    return orders_service.change_status(session, order_id, data.to_status)
+
+
+@router.patch(
+    "/{order_id}/history/{history_id}", status_code=status.HTTP_400_BAD_REQUEST
+)
+def update_history(order_id: int, history_id: int) -> None:
+    orders_service.reject_history_mutation()
+
+
+@router.delete(
+    "/{order_id}/history/{history_id}", status_code=status.HTTP_400_BAD_REQUEST
+)
+def delete_history(order_id: int, history_id: int) -> None:
+    orders_service.reject_history_mutation()
