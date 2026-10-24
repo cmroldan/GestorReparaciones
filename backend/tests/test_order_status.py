@@ -37,6 +37,11 @@ def test_negative_or_float_budget_is_422(client):
         assert response.status_code == 422
 
 
+def test_change_status_of_missing_order_is_404(client):
+    assert client.post("/api/v1/service-orders/999999/status",
+                       json={"to_status": "en_diagnostico"}).status_code == 404
+
+
 def test_history_is_append_only(client):
     order = create_order_via_api(client)
     history = client.get(f"/api/v1/service-orders/{order['id']}").json()["status_history"]
