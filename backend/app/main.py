@@ -3,7 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import CORS_ORIGINS
 from app.error_handlers import register_exception_handlers
-from app.routers import clients, equipments, health, items, stock_movements
+from app.routers import clients, equipments, health, items, service_orders, stock_movements
 
 app = FastAPI(title="Taller de Reparaciones")
 register_exception_handlers(app)
@@ -21,3 +21,4 @@ app.include_router(equipments.router, prefix="/api/v1")
 app.include_router(items.router, prefix="/api/v1")
 app.include_router(stock_movements.router, prefix="/api/v1")
 app.include_router(stock_movements.items_router, prefix="/api/v1")
+app.include_router(service_orders.router, prefix="/api/v1")
