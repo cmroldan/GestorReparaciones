@@ -1,13 +1,14 @@
 from sqlalchemy import select
 from sqlalchemy.orm import Session, selectinload
 
-from app.exceptions import RecursoNoEncontrado
+from app.exceptions import RecursoNoEncontrado, ReglaNegocioViolada
 from app.models import Client
 from app.models.equipment import Equipment
 from app.schemas.equipment import EquipmentCreate, EquipmentDetail, EquipmentUpdate
 
 _MSG_CLIENTE_INEXISTENTE = "No existe el cliente solicitado."
 _MSG_EQUIPO_INEXISTENTE = "No existe el equipo solicitado."
+_MSG_CAMPOS_OBLIGATORIOS = "El tipo y la marca del equipo son obligatorios."
 
 
 def create_equipment(session: Session, data: EquipmentCreate) -> Equipment:
@@ -40,7 +41,14 @@ def update_equipment(
     equipment = session.get(Equipment, equipment_id)
     if equipment is None:
         raise RecursoNoEncontrado(_MSG_EQUIPO_INEXISTENTE)
-    for field, value in data.model_dump(exclude_unset=True).items():
+    fields = data.model_dump(exclude_unset=True)
+
+    # El tipo y la marca son obligatorios: no se aceptan nulos explícitos.
+    for required_field in ("type", "brand"):
+        if required_field in fields and fields[required_field] is None:
+            raise ReglaNegocioViolada(_MSG_CAMPOS_OBLIGATORIOS)
+
+    for field, value in fields.items():
         setattr(equipment, field, value)
     session.commit()
     return equipment
