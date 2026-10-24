@@ -1,0 +1,113 @@
+schema: spec-driven
+
+project:
+  name: "taller"
+  display_name: "Sistema de Gestión de Taller de Reparación y venta de Insumos y Accesorios"
+  version: "0.1.0"
+  description: "Aplicación web centralizada para la gestión de clientes, equipos (notebooks, PC de escritorio, impresoras), órdenes de trabajo, inventario de repuestos/productos y punto de venta."
+  language: "es"
+
+architecture:
+  stack:
+    frontend:
+      framework: "Angular"
+      language: "TypeScript"
+      type: "SPA (Single Page Application)"
+    backend:
+      framework: "FastAPI"
+      language: "Python 3.11+"
+      orm: "SQLAlchemy 2.0"
+    database:
+      engine: "SQLite"
+      mode: "file-based persistence"
+    communication:
+      protocol: "REST / HTTP JSON API"
+    vcs:
+      tool: "Git"
+    environment:
+      execution: "local"
+
+scope:
+  mvp:
+    multi_user: false
+    authentication_required: false
+    roles_and_permissions: false
+    target_devices:
+      - "Desktop / PC"
+    locale: "es-AR"
+
+domains:
+  - name: "clientes_y_equipos"
+    description: "Administración de datos de contacto de clientes y fichas de equipos asignados."
+    entities:
+      - Client
+      - Equipment
+    features:
+      - "Registro, consulta y edición de clientes"
+      - "Asociación de equipos (notebook, PC de escritorio, impresora) a un cliente"
+      - "Consulta de historial de reparaciones por equipo"
+
+  - name: "ordenes_reparacion"
+    description: "Gestión del ciclo de vida de reparación, diagnósticos, presupuestos y estados."
+    entities:
+      - ServiceOrder
+      - OrderStatusHistory
+      - WorkLog
+    features:
+      - "Generación de órdenes con número único correlativo"
+      - "Registro de falla declarada, fecha de ingreso y diagnósticos"
+      - "Flujo de estados mediante máquinas de estado y transiciones válidas"
+      - "Historial auditable de cambios de estado"
+
+  - name: "inventario_y_repuestos"
+    description: "Control de stock de repuestos para servicio técnico e insumos/accesorios para venta."
+    entities:
+      - Item (Repuesto / Producto)
+      - StockMovement
+    features:
+      - "Alta, modificación y baja de repuestos y productos"
+      - "Consumo de repuestos vinculados a una orden de reparación"
+      - "Regla de negocio: Validación estricta contra stock negativo"
+      - "Alertas de nivel crítico o bajo stock"
+
+  - name: "ventas"
+    description: "Punto de venta y registro de transacciones comerciales directas."
+    entities:
+      - Sale
+      - SaleItem
+    features:
+      - "Registro de ventas de accesorios e insumos"
+      - "Descuento automático de stock al confirmar venta"
+      - "Filtros y ordenamiento de ventas por rango de fechas"
+
+rules_and_constraints:
+  business_rules:
+    - id: "BR-001"
+      name: "No Negative Stock"
+      description: "El sistema no permite reducciones de stock ni consumos que superen las existencias disponibles."
+    - id: "BR-002"
+      name: "Valid State Transitions"
+      description: "Las órdenes de reparación solo pueden cambiar de estado según la máquina de estados definida (ej. Ingresado -> En Diagnóstico -> Presupuestado -> En Reparación -> Listo -> Entregado)."
+    - id: "BR-003"
+      name: "Unique Order Identifier"
+      description: "Cada orden de trabajo debe tener un identificador o número único e inalterable."
+    - id: "BR-004"
+      name: "Input Validation"
+      description: "Toda operación de escritura (POST/PUT/PATCH) debe validar esquemas con Pydantic en el backend."
+    - id: "BR-005"
+      name: "Monetary Values in Cents"
+      description: "Todo importe monetario se almacena, calcula y transporta como entero en centavos; queda prohibido el uso de punto flotante."
+
+testing_strategy:
+  backend:
+    framework: "pytest"
+    coverage_focus: "Reglas de negocio, transiciones de estado y cálculo de stock"
+  frontend:
+    framework: "Jasmine / Karma or Cypress"
+    coverage_focus: "Flujos críticos de interfaz para el MVP"
+
+development:
+  mock_data: true
+  documentation:
+    readme_required: true
+    setup_instructions: true

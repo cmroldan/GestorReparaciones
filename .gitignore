@@ -1,0 +1,42 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.venv/
+venv/
+env/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Node / Angular
+node_modules/
+dist/
+coverage/
+.angular/
+npm-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# SQLite
+*.db
+*.sqlite
+*.sqlite3
+taller.db
+
+# Variables de entorno
+.env
+.env.*
+
+# Worktrees
+.worktrees/
+worktrees/
+
+# Editores y sistema operativo
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
