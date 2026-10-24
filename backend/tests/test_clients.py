@@ -21,6 +21,35 @@ def test_duplicate_document_and_email_are_409(client):
                                                 "email": "ana@example.COM"}).status_code == 409
 
 
+def test_search_matches_document_phone_and_email(client):
+    created = client.post("/api/v1/clients", json={
+        "first_name": "Ana", "last_name": "Pérez", "document": "30111222",
+        "phone": "3415551234", "email": "Ana@Example.com"
+    }).json()
+    for term in ("30111222", "3415551234", "ana@example"):
+        results = client.get(f"/api/v1/clients?q={term}").json()
+        assert len(results) == 1
+        assert results[0]["id"] == created["id"]
+
+
+def test_duplicate_document_with_surrounding_whitespace_is_409(client):
+    body = {"first_name": "Ana", "last_name": "Pérez",
+            "document": "30111222", "phone": "3415551234"}
+    assert client.post("/api/v1/clients", json=body).status_code == 201
+    duplicate = {**body, "document": " 30111222 ", "phone": "3415559999"}
+    assert client.post("/api/v1/clients", json=duplicate).status_code == 409
+
+
+def test_update_cannot_clear_required_names(client):
+    created = client.post("/api/v1/clients", json={
+        "first_name": "Ana", "last_name": "Pérez", "phone": "3415551234"
+    }).json()
+    assert client.patch(f"/api/v1/clients/{created['id']}",
+                        json={"first_name": None}).status_code == 400
+    assert client.patch(f"/api/v1/clients/{created['id']}",
+                        json={"last_name": None}).status_code == 400
+
+
 def test_update_keeping_own_email_is_not_duplicate(client):
     created = client.post("/api/v1/clients", json={
         "first_name": "Ana", "last_name": "Pérez", "email": "ana@example.com"

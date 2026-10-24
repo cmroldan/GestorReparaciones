@@ -1,4 +1,4 @@
-from sqlalchemy import func, select
+from sqlalchemy import func, or_, select
 from sqlalchemy.orm import Session, selectinload
 
 from app.models import Client
@@ -10,6 +10,14 @@ _MSG_DOCUMENTO_DUPLICADO = "Ya existe un cliente con ese documento."
 _MSG_EMAIL_DUPLICADO = "Ya existe un cliente con ese correo electrónico."
 _MSG_CLIENTE_INEXISTENTE = "No existe el cliente solicitado."
 _MSG_SIN_CONTACTO = "Debe informar teléfono o correo electrónico."
+_MSG_NOMBRES_OBLIGATORIOS = "El nombre y el apellido son obligatorios."
+
+
+def _normalized_document(document: str | None) -> str | None:
+    if document is None:
+        return None
+    document = document.strip()
+    return document or None
 
 
 def _raise_if_duplicate(
@@ -19,6 +27,7 @@ def _raise_if_duplicate(
     email: str | None,
     exclude_id: int | None = None,
 ) -> None:
+    document = _normalized_document(document)
     if document is not None:
         query = select(func.count()).select_from(Client).where(Client.document == document)
         if exclude_id is not None:
@@ -51,8 +60,13 @@ def list_clients(session: Session, q: str | None) -> list[Client]:
     if q:
         pattern = f"%{q}%"
         query = query.where(
-            func.lower(Client.first_name).like(func.lower(pattern))
-            | func.lower(Client.last_name).like(func.lower(pattern))
+            or_(
+                func.lower(Client.first_name).like(func.lower(pattern)),
+                func.lower(Client.last_name).like(func.lower(pattern)),
+                func.lower(Client.document).like(func.lower(pattern)),
+                func.lower(Client.phone).like(func.lower(pattern)),
+                func.lower(Client.email).like(func.lower(pattern)),
+            )
         )
     return list(session.scalars(query))
 
@@ -79,6 +93,11 @@ def get_client_detail(session: Session, client_id: int) -> ClientDetail:
 def update_client(session: Session, client_id: int, data: ClientUpdate) -> Client:
     client = get_client(session, client_id)
     fields = data.model_dump(exclude_unset=True)
+
+    # Los nombres son obligatorios: no se aceptan nulos explícitos.
+    for name_field in ("first_name", "last_name"):
+        if name_field in fields and fields[name_field] is None:
+            raise ReglaNegocioViolada(_MSG_NOMBRES_OBLIGATORIOS)
 
     # Tras aplicar los cambios, el cliente debe conservar algún medio de contacto.
     phone = fields.get("phone", client.phone)
