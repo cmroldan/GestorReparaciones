@@ -14,6 +14,7 @@ from app.models.item import Item
 from app.models.order_status_history import OrderStatusHistory
 from app.models.service_order import ServiceOrder
 from app.models.stock_movement import StockMovement
+from app.models.work_log import WorkLog
 from app.schemas.service_order import (
     ConsumptionRead,
     OrderStatusHistoryRead,
@@ -45,6 +46,9 @@ _MSG_ITEM_INEXISTENTE = "No existe el ítem solicitado."
 _MSG_ITEM_NO_REPUESTO = "Solo se pueden consumir ítems de tipo repuesto."
 _MSG_CONSUMO_INMODIFICABLE = (
     "Los consumos son de solo lectura y no pueden modificarse ni eliminarse."
+)
+_MSG_BITACORA_INMODIFICABLE = (
+    "La bitácora técnica es de solo lectura y no puede modificarse ni eliminarse."
 )
 
 ALLOWED_TRANSITIONS: dict[OrderStatus, set[OrderStatus]] = {
@@ -100,10 +104,7 @@ def get_order_detail(session: Session, order_id: int) -> ServiceOrderDetail:
     query = (
         select(ServiceOrder)
         .where(ServiceOrder.id == order_id)
-        .options(
-            selectinload(ServiceOrder.status_history),
-            selectinload(ServiceOrder.work_logs),
-        )
+        .options(selectinload(ServiceOrder.status_history))
     )
     order = session.scalar(query)
     if order is None:
@@ -116,8 +117,8 @@ def get_order_detail(session: Session, order_id: int) -> ServiceOrderDetail:
             OrderStatusHistoryRead.model_validate(row) for row in historial
         ],
         work_logs=[
-            WorkLogRead.model_validate(row)
-            for row in sorted(order.work_logs, key=lambda entry: (entry.created_at, entry.id))
+            WorkLogRead.model_validate(log)
+            for log in list_work_logs(session, order_id)
         ],
         consumptions=[
             ConsumptionRead.from_movement(movement)
@@ -218,3 +219,32 @@ def list_consumptions(session: Session, order_id: int) -> list[StockMovement]:
 def reject_consumption_mutation() -> None:
     """Los consumos son append-only: no admiten PATCH ni DELETE."""
     raise ReglaNegocioViolada(_MSG_CONSUMO_INMODIFICABLE)
+
+
+def add_work_log(session: Session, order_id: int, description: str) -> WorkLog:
+    """Agrega una entrada a la bitácora técnica de la orden."""
+    order = get_order(session, order_id)
+    log = WorkLog(
+        service_order_id=order.id,
+        description=description,
+        created_at=utcnow(),
+    )
+    session.add(log)
+    session.commit()
+    return log
+
+
+def list_work_logs(session: Session, order_id: int) -> list[WorkLog]:
+    """Devuelve la bitácora técnica de la orden, ordenada cronológicamente."""
+    get_order(session, order_id)
+    query = (
+        select(WorkLog)
+        .where(WorkLog.service_order_id == order_id)
+        .order_by(WorkLog.created_at, WorkLog.id)
+    )
+    return list(session.scalars(query))
+
+
+def reject_work_log_mutation() -> None:
+    """La bitácora técnica es append-only: no admite PATCH ni DELETE."""
+    raise ReglaNegocioViolada(_MSG_BITACORA_INMODIFICABLE)
