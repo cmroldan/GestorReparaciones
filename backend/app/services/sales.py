@@ -1,16 +1,21 @@
-from sqlalchemy.orm import Session
+from datetime import date
+
+from sqlalchemy import select
+from sqlalchemy.orm import Session, selectinload
 
 from app.exceptions import RecursoNoEncontrado, ReglaNegocioViolada
 from app.models.enums import ItemType, MovementType
 from app.models.item import Item
 from app.models.sale import Sale, SaleItem
 from app.schemas.sale import SaleCreate
+from app.services.dates import local_date_range_to_utc
 from app.services.stock import apply_stock_delta
 
 _MSG_VENTA_INEXISTENTE = "No existe la venta solicitada."
 _MSG_ITEM_INEXISTENTE = "No existe el ítem solicitado."
 _MSG_ITEM_INACTIVO = "El ítem está inactivo para esa operación."
 _MSG_ITEM_NO_VENDIBLE = "Solo se pueden vender insumos y accesorios."
+_MSG_VENTA_INMODIFICABLE = "Las ventas no se pueden modificar ni eliminar."
 
 _TIPOS_VENDIBLES = (ItemType.SUPPLY, ItemType.ACCESSORY)
 
@@ -74,3 +79,33 @@ def get_sale(session: Session, sale_id: int) -> Sale:
     if sale is None:
         raise RecursoNoEncontrado(_MSG_VENTA_INEXISTENTE)
     return sale
+
+
+def list_sales(
+    session: Session,
+    from_date: date | None = None,
+    to_date: date | None = None,
+) -> tuple[list[Sale], int]:
+    """Lista ventas del rango local (inclusivo) con su total del período.
+
+    `from_date`/`to_date` son fechas locales inclusivas; se convierten a un
+    intervalo UTC semiabierto según `local_date_range_to_utc`. Las ventas se
+    devuelven de la más reciente a la más antigua.
+    """
+    start, end = local_date_range_to_utc(from_date, to_date)
+    query = (
+        select(Sale)
+        .options(selectinload(Sale.items))
+        .order_by(Sale.created_at.desc(), Sale.id.desc())
+    )
+    if start is not None:
+        query = query.where(Sale.created_at >= start)
+    if end is not None:
+        query = query.where(Sale.created_at < end)
+    sales = list(session.scalars(query))
+    return sales, sum(sale.total_cents for sale in sales)
+
+
+def reject_sale_mutation() -> None:
+    """Las ventas son de solo alta: no se modifican ni se eliminan."""
+    raise ReglaNegocioViolada(_MSG_VENTA_INMODIFICABLE)
