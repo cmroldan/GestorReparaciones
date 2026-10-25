@@ -63,3 +63,39 @@ def test_total_sent_by_client_is_ignored(client):
     })
     assert response.status_code == 201
     assert response.json()["total_cents"] == 1000
+
+def test_get_sale_returns_the_created_sale(client):
+    supply = create_item(client, "INS-006", "supply", 1000, 10)
+    accessory = create_item(client, "ACC-002", "accessory", 2500, 5)
+    created = client.post("/api/v1/sales", json={"items": [
+        {"item_id": supply["id"], "quantity": 2},
+        {"item_id": accessory["id"], "quantity": 1},
+    ]}).json()
+    response = client.get(f"/api/v1/sales/{created['id']}")
+    assert response.status_code == 200
+    sale = response.json()
+    assert sale["id"] == created["id"]
+    assert sale["total_cents"] == 4500
+    assert sale["created_at"] == created["created_at"]
+    assert len(sale["items"]) == 2
+    assert {i["item_id"] for i in sale["items"]} == {supply["id"], accessory["id"]}
+    assert all(i["item_code"] == i["item_name"] for i in sale["items"])
+    assert {i["quantity"] for i in sale["items"]} == {1, 2}
+    assert {i["unit_price_cents"] for i in sale["items"]} == {1000, 2500}
+    assert {i["subtotal_cents"] for i in sale["items"]} == {2000, 2500}
+
+def test_get_missing_sale_returns_404(client):
+    assert client.get("/api/v1/sales/999999").status_code == 404
+
+def test_sale_with_nonexistent_item_returns_404_without_side_effects(
+    client, db_session
+):
+    supply = create_item(client, "INS-007", "supply", 1000, 10)
+    response = client.post("/api/v1/sales", json={"items": [
+        {"item_id": supply["id"], "quantity": 1},
+        {"item_id": 999999, "quantity": 1},
+    ]})
+    assert response.status_code == 404
+    assert response.json()["detail"] == "No existe el ítem solicitado."
+    assert client.get(f"/api/v1/items/{supply['id']}").json()["stock"] == 10
+    assert db_session.query(Sale).count() == 0
