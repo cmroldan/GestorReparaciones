@@ -13,8 +13,11 @@ def test_sale_range_is_inclusive_and_accumulates_total(client, db_session):
     assert {sale["id"] for sale in response.json()["sales"]} == {first["id"], second["id"]}
     assert response.json()["total_cents"] == 6000
 
-def test_empty_sale_range_and_immutability(client):
+def test_empty_sale_range_and_immutability(client, db_session):
     sale = create_sale_via_api(client, quantity=1, price_cents=1000)
+    # Fija la venta fuera del día consultado para que el test no dependa
+    # de la fecha del reloj del sistema.
+    set_created_at(db_session, sale["id"], "2026-10-20T03:00:00+00:00")
     empty = client.get("/api/v1/sales?from=2026-10-25&to=2026-10-25")
     assert empty.json() == {"sales": [], "total_cents": 0}
     assert client.patch(f"/api/v1/sales/{sale['id']}", json={}).status_code == 400
