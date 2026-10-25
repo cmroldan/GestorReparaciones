@@ -9,4 +9,9 @@ export const routes: Routes = [
     loadChildren: () =>
       import('./features/clients/clients.routes').then((m) => m.CLIENT_ROUTES),
   },
+  {
+    path: 'inventario',
+    loadChildren: () =>
+      import('./features/inventory/inventory.routes').then((m) => m.INVENTORY_ROUTES),
+  },
 ];
