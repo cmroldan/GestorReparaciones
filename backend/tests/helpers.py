@@ -6,9 +6,14 @@ estos nombres en lugar de redefinirlos.
 """
 
 from collections.abc import Iterable
+from datetime import datetime
 from typing import Any
+from uuid import uuid4
 
 from fastapi.testclient import TestClient
+from sqlalchemy.orm import Session
+
+from app.models.sale import Sale
 
 _ORDEN_ESTADOS_HASTA_ENTREGADO: list[str] = [
     "en_diagnostico", "presupuestado", "en_reparacion", "listo", "entregado",
@@ -111,3 +116,31 @@ def order_in_repair_with_part(
     advance_to(client, order["id"], ["en_diagnostico", "presupuestado", "en_reparacion"])
     part = create_item_via_api(client, code=f"REP-{order['id']:03d}", stock=stock)
     return order, part
+
+
+def create_sale_via_api(
+    client: TestClient, quantity: int = 1, price_cents: int = 1000
+) -> dict[str, Any]:
+    """Crea un insumo con stock de sobra y lo vende según los parámetros."""
+    item = create_item_via_api(
+        client,
+        code=f"INS-{uuid4().hex[:8]}",
+        type="supply",
+        price_cents=price_cents,
+        cost_cents=0,
+        min_stock=0,
+        stock=quantity + 5,
+    )
+    response = client.post("/api/v1/sales", json={
+        "items": [{"item_id": item["id"], "quantity": quantity}]
+    })
+    assert response.status_code == 201
+    return response.json()
+
+
+def set_created_at(db_session: Session, sale_id: int, iso: str) -> None:
+    """Fija la fecha de creación de una venta (para tests de listado)."""
+    sale = db_session.get(Sale, sale_id)
+    assert sale is not None
+    sale.created_at = datetime.fromisoformat(iso)
+    db_session.commit()
