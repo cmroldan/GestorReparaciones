@@ -1,3 +1,5 @@
+from datetime import date
+
 from sqlalchemy import select
 from sqlalchemy.orm import Session, selectinload
 
@@ -24,6 +26,7 @@ from app.schemas.service_order import (
     ServiceOrderUpdate,
     WorkLogRead,
 )
+from app.services.dates import local_date_range_to_utc
 from app.services.stock import apply_stock_delta
 
 _MSG_CLIENTE_INEXISTENTE = "No existe el cliente solicitado."
@@ -98,6 +101,33 @@ def get_order(session: Session, order_id: int) -> ServiceOrder:
     if order is None:
         raise RecursoNoEncontrado(_MSG_ORDEN_INEXISTENTE)
     return order
+
+
+def list_orders(
+    session: Session,
+    status: OrderStatus | None = None,
+    client_id: int | None = None,
+    from_date: date | None = None,
+    to_date: date | None = None,
+) -> list[ServiceOrder]:
+    """Lista órdenes filtradas por estado, cliente y rango de fechas locales.
+
+    `from_date`/`to_date` son fechas locales inclusivas; se convierten a un
+    intervalo UTC semiabierto (inicio inclusivo, fin exclusivo según
+    `local_date_range_to_utc`).
+    """
+    start, end = local_date_range_to_utc(from_date, to_date)
+    query = select(ServiceOrder)
+    if status is not None:
+        query = query.where(ServiceOrder.status == status)
+    if client_id is not None:
+        query = query.where(ServiceOrder.client_id == client_id)
+    if start is not None:
+        query = query.where(ServiceOrder.entry_date >= start)
+    if end is not None:
+        query = query.where(ServiceOrder.entry_date < end)
+    query = query.order_by(ServiceOrder.entry_date, ServiceOrder.id)
+    return list(session.scalars(query))
 
 
 def get_order_detail(session: Session, order_id: int) -> ServiceOrderDetail:

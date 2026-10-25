@@ -1,9 +1,11 @@
+from datetime import date
 from typing import TYPE_CHECKING
 
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, Query, status
 from sqlalchemy.orm import Session
 
 from app.db import get_db
+from app.models.enums import OrderStatus
 from app.schemas.service_order import (
     ConsumptionCreate,
     ConsumptionRead,
@@ -27,6 +29,23 @@ def create_order(
     data: ServiceOrderCreate, session: Session = Depends(get_db)
 ) -> "ServiceOrder":
     return orders_service.create_order(session, data)
+
+
+@router.get("", response_model=list[ServiceOrderRead])
+def list_orders(
+    from_: date | None = Query(None, alias="from"),
+    to: date | None = None,
+    client_id: int | None = None,
+    status_filter: OrderStatus | None = Query(None, alias="status"),
+    session: Session = Depends(get_db),
+) -> list["ServiceOrder"]:
+    return orders_service.list_orders(
+        session,
+        status=status_filter,
+        client_id=client_id,
+        from_date=from_,
+        to_date=to,
+    )
 
 
 @router.get("/{order_id}", response_model=ServiceOrderDetail)
