@@ -7,3 +7,4 @@ export const CLIENT_ROUTES: Routes = [
   { path: '', component: ClientListComponent },
   { path: ':id', component: ClientDetailComponent },
 ];
+

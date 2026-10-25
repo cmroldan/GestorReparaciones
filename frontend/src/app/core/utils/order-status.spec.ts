@@ -7,3 +7,4 @@ describe('order-status', () => {
     expect(nextStatuses('entregado')).toEqual([]);
   });
 });
+

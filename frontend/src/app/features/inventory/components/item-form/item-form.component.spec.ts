@@ -32,3 +32,4 @@ describe('ItemFormComponent', () => {
     expect(form.form.get('stock')?.disabled).toBe(true);
   });
 });
+

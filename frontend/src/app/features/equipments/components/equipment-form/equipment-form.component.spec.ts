@@ -41,3 +41,4 @@ describe('EquipmentFormComponent', () => {
     expect(component.form.valid).toBe(true);
   });
 });
+

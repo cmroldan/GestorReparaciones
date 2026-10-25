@@ -7,3 +7,4 @@ export const ORDER_ROUTES: Routes = [
   { path: '', component: OrderListComponent },
   { path: ':id', component: OrderDetailComponent },
 ];
+

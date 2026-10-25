@@ -7,3 +7,4 @@ export const SALE_ROUTES: Routes = [
   { path: '', component: SaleFormComponent },
   { path: 'historial', component: SaleListComponent },
 ];
+

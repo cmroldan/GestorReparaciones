@@ -29,3 +29,4 @@ describe('StockMovementDialogComponent', () => {
     expect(dialog.form.valid).toBe(true);
   });
 });
+

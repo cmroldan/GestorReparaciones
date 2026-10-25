@@ -51,3 +51,4 @@ describe('SaleFormComponent', () => {
     expect(component.canSubmit()).toBe(true);
   });
 });
+

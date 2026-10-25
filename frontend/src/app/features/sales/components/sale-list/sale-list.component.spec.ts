@@ -30,3 +30,4 @@ describe('SaleListComponent', () => {
     expect(component.totalAccumulatedCents()).toBe(250000);
   });
 });
+

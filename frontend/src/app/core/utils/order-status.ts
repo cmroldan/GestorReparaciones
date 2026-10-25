@@ -21,3 +21,4 @@ export const ORDER_STATUS_LABELS: Record<OrderStatus, string> = {
 export function nextStatuses(status: OrderStatus): OrderStatus[] {
   return NEXT_STATUS[status] ?? [];
 }
+
