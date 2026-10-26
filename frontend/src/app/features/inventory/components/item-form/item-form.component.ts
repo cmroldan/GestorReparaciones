@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, Inject, Optional } from '@angular/core';
+import { Component, Inject, OnInit, Optional } from '@angular/core';
 import {
   AbstractControl,
   FormBuilder,
@@ -20,6 +20,7 @@ import { MatSelectModule } from '@angular/material/select';
 
 import { Item, ItemCreate, ItemType, ItemUpdate } from '../../../../core/models/item.model';
 import { ItemService } from '../../../../core/services/item.service';
+import { nextItemCode } from '../../../../core/utils/item-code';
 import { formatCents, parseCents } from '../../../../core/utils/money';
 
 export interface ItemFormData {
@@ -127,7 +128,7 @@ export function moneyValidator(control: AbstractControl): ValidationErrors | nul
     }
   `,
 })
-export class ItemFormComponent {
+export class ItemFormComponent implements OnInit {
   form: FormGroup;
 
   constructor(
@@ -159,6 +160,19 @@ export class ItemFormComponent {
       this.form.get('code')?.disable();
       this.form.get('stock')?.disable();
     }
+  }
+
+  ngOnInit(): void {
+    if (this.data?.mode !== 'create') return;
+
+    this.itemService.list().subscribe((items) => {
+      const codeControl = this.form.get('code');
+      if (!codeControl) return;
+      const current = String(codeControl.value ?? '').trim();
+      if (current.length === 0) {
+        codeControl.setValue(nextItemCode(items));
+      }
+    });
   }
 
   toPayload(): ItemCreate | ItemUpdate {
