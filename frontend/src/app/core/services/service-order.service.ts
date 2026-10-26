@@ -52,7 +52,7 @@ export class ServiceOrderService {
 
   changeStatus(id: number, toStatus: OrderStatus): Observable<ServiceOrder> {
     const payload: StatusChange = { to_status: toStatus };
-    return this.http.patch<ServiceOrder>(`${BASE_URL}/${id}/status`, payload);
+    return this.http.post<ServiceOrder>(`${BASE_URL}/${id}/status`, payload);
   }
 
   addWorkLog(id: number, description: string): Observable<WorkLog> {

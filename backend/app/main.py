@@ -23,6 +23,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+app.include_router(health.router)
 app.include_router(health.router, prefix="/api/v1")
 app.include_router(clients.router, prefix="/api/v1")
 app.include_router(equipments.router, prefix="/api/v1")
