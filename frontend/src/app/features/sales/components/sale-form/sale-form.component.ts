@@ -8,6 +8,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MatTableModule } from '@angular/material/table';
+import { RouterModule } from '@angular/router';
 
 import { Item } from '../../../../core/models/item.model';
 import { SaleCreate } from '../../../../core/models/sale.model';
@@ -36,14 +37,15 @@ export interface CartLine {
     MatSelectModule,
     MatTableModule,
     MatIconModule,
+    RouterModule,
   ],
   template: `
     <div class="sale-form-container">
       <div class="header-nav">
         <h2>Punto de Venta (Mostrador)</h2>
-        <button mat-button color="primary" routerLink="/ventas/historial">
+        <a mat-button color="primary" routerLink="/ventas/historial">
           Ver Historial de Ventas →
-        </button>
+        </a>
       </div>
 
       <mat-card class="add-item-card">

@@ -1,5 +1,10 @@
+import { TestBed } from '@angular/core/testing';
+import { provideRouter } from '@angular/router';
 import { of } from 'rxjs';
 
+import { ItemService } from '../../../../core/services/item.service';
+import { NotificationService } from '../../../../core/services/notification.service';
+import { SaleService } from '../../../../core/services/sale.service';
 import { SaleFormComponent } from './sale-form.component';
 
 describe('SaleFormComponent', () => {
@@ -50,5 +55,25 @@ describe('SaleFormComponent', () => {
     component.cart = [{ item_id: 1, quantity: 2, item_name: 'Mouse', price_cents: 500 }];
     expect(component.canSubmit()).toBe(true);
   });
-});
 
+  it('links to the sales history route', async () => {
+    await TestBed.configureTestingModule({
+      imports: [SaleFormComponent],
+      providers: [
+        provideRouter([]),
+        { provide: SaleService, useValue: {} },
+        { provide: ItemService, useValue: { list: () => of([]) } },
+        { provide: NotificationService, useValue: { success: () => {} } },
+      ],
+    }).compileComponents();
+
+    const fixture = TestBed.createComponent(SaleFormComponent);
+    await fixture.whenStable();
+
+    const link = (
+      Array.from(fixture.nativeElement.querySelectorAll('a')) as HTMLAnchorElement[]
+    ).find((anchor) => anchor.textContent?.includes('Ver Historial de Ventas'));
+
+    expect(link?.getAttribute('href')).toBe('/ventas/historial');
+  });
+});

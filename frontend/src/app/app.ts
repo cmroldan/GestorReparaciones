@@ -1,8 +1,10 @@
 import { Component, signal } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 
+import { MainNavComponent } from './shared/components/main-nav/main-nav.component';
+
 @Component({
-  imports: [RouterOutlet],
+  imports: [RouterOutlet, MainNavComponent],
   selector: 'app-root',
   styleUrl: './app.scss',
   templateUrl: './app.html',

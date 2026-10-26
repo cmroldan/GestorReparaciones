@@ -1,23 +1,12 @@
 import { Component } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
-import { MatToolbarModule } from '@angular/material/toolbar';
 import { RouterModule } from '@angular/router';
 
 @Component({
   selector: 'app-home',
   standalone: true,
-  imports: [MatToolbarModule, MatButtonModule, RouterModule],
+  imports: [MatButtonModule, RouterModule],
   template: `
-    <mat-toolbar color="primary">
-      <span>Taller de Reparaciones</span>
-      <span class="spacer"></span>
-      <nav class="nav-links">
-        <a mat-button routerLink="/clientes">Clientes</a>
-        <a mat-button routerLink="/inventario">Inventario</a>
-        <a mat-button routerLink="/ordenes">Órdenes</a>
-        <a mat-button routerLink="/ventas">Ventas</a>
-      </nav>
-    </mat-toolbar>
     <main class="home">
       <h1>Panel Principal</h1>
       <p>Bienvenido al sistema de gestión de taller de reparaciones e insumos.</p>
@@ -30,12 +19,6 @@ import { RouterModule } from '@angular/router';
     </main>
   `,
   styles: `
-    .spacer {
-      flex: 1 1 auto;
-    }
-    .nav-links a {
-      color: white;
-    }
     .home {
       padding: 2rem;
       max-width: 60rem;
