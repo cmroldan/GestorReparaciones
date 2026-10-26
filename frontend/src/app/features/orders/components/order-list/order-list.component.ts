@@ -39,14 +39,17 @@ import { OrderFormComponent } from '../order-form/order-form.component';
   ],
   template: `
     <div class="orders-container">
-      <div class="header">
-        <h1>Órdenes de Reparación</h1>
+      <div class="header page-toolbar">
+        <div>
+          <h2>Órdenes de servicio</h2>
+          <p class="page-subtitle">Seguimiento de los equipos recibidos en el taller.</p>
+        </div>
         <button mat-flat-button color="primary" (click)="openCreateDialog()">
           Nueva Orden
         </button>
       </div>
 
-      <div class="filters-bar">
+      <div class="filters-bar panel">
         <mat-form-field appearance="outline" class="filter-field">
           <mat-label>Estado</mat-label>
           <mat-select [(ngModel)]="statusFilter" (selectionChange)="onFilterChange()">
@@ -78,106 +81,112 @@ import { OrderFormComponent } from '../order-form/order-form.component';
         </mat-form-field>
       </div>
 
-      <table mat-table [dataSource]="orders()" class="mat-elevation-z1 orders-table">
-        <ng-container matColumnDef="number">
-          <th mat-header-cell *matHeaderCellDef>Nº de Orden</th>
-          <td mat-cell *matCellDef="let o">
-            <strong>{{ o.number || '#' + o.id }}</strong>
-          </td>
-        </ng-container>
+      <div class="panel table-panel">
+        <div class="table-scroll">
+          <table mat-table [dataSource]="orders()" class="orders-table" aria-label="Órdenes de servicio">
+            <ng-container matColumnDef="number">
+              <th mat-header-cell *matHeaderCellDef>Nº de Orden</th>
+              <td mat-cell *matCellDef="let o">
+                <strong>{{ o.number || '#' + o.id }}</strong>
+              </td>
+            </ng-container>
 
-        <ng-container matColumnDef="entry_date">
-          <th mat-header-cell *matHeaderCellDef>Ingreso</th>
-          <td mat-cell *matCellDef="let o">{{ o.entry_date | date: 'dd/MM/yyyy HH:mm' }}</td>
-        </ng-container>
+            <ng-container matColumnDef="entry_date">
+              <th mat-header-cell *matHeaderCellDef>Ingreso</th>
+              <td mat-cell *matCellDef="let o">{{ o.entry_date | date: 'dd/MM/yyyy HH:mm' }}</td>
+            </ng-container>
 
-        <ng-container matColumnDef="client">
-          <th mat-header-cell *matHeaderCellDef>Cliente</th>
-          <td mat-cell *matCellDef="let o">{{ clientName(o.client_id) }}</td>
-        </ng-container>
+            <ng-container matColumnDef="client">
+              <th mat-header-cell *matHeaderCellDef>Cliente</th>
+              <td mat-cell *matCellDef="let o">{{ clientName(o.client_id) }}</td>
+            </ng-container>
 
-        <ng-container matColumnDef="equipment">
-          <th mat-header-cell *matHeaderCellDef>Equipo</th>
-          <td mat-cell *matCellDef="let o">{{ equipmentLabel(o.equipment_id) }}</td>
-        </ng-container>
+            <ng-container matColumnDef="equipment">
+              <th mat-header-cell *matHeaderCellDef>Equipo</th>
+              <td mat-cell *matCellDef="let o">{{ equipmentLabel(o.equipment_id) }}</td>
+            </ng-container>
 
-        <ng-container matColumnDef="failure">
-          <th mat-header-cell *matHeaderCellDef>Falla Declarada</th>
-          <td mat-cell *matCellDef="let o">{{ o.reported_failure }}</td>
-        </ng-container>
+            <ng-container matColumnDef="failure">
+              <th mat-header-cell *matHeaderCellDef>Falla Declarada</th>
+              <td mat-cell *matCellDef="let o">{{ o.reported_failure }}</td>
+            </ng-container>
 
-        <ng-container matColumnDef="status">
-          <th mat-header-cell *matHeaderCellDef>Estado</th>
-          <td mat-cell *matCellDef="let o">
-            <span class="status-badge" [attr.data-status]="o.status">
-              {{ getStatusLabel(o.status) }}
-            </span>
-          </td>
-        </ng-container>
+            <ng-container matColumnDef="status">
+              <th mat-header-cell *matHeaderCellDef>Estado</th>
+              <td mat-cell *matCellDef="let o">
+                <span class="status-badge" [attr.data-status]="o.status">
+                  {{ getStatusLabel(o.status) }}
+                </span>
+              </td>
+            </ng-container>
 
-        <ng-container matColumnDef="actions">
-          <th mat-header-cell *matHeaderCellDef>Acciones</th>
-          <td mat-cell *matCellDef="let o">
-            <button mat-button color="primary" (click)="viewDetail(o.id)">
-              Ver Detalle
-            </button>
-          </td>
-        </ng-container>
+            <ng-container matColumnDef="actions">
+              <th mat-header-cell *matHeaderCellDef>Acciones</th>
+              <td mat-cell *matCellDef="let o">
+                <button mat-button color="primary" (click)="viewDetail(o.id)">
+                  Ver Detalle
+                </button>
+              </td>
+            </ng-container>
 
-        <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
-        <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
+            <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+            <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
 
-        <tr class="mat-row" *matNoDataRow>
-          <td class="mat-cell empty-cell" [attr.colspan]="displayedColumns.length">
-            No se encontraron órdenes de reparación.
-          </td>
-        </tr>
-      </table>
+            <tr class="mat-row" *matNoDataRow>
+              <td class="mat-cell empty-cell" [attr.colspan]="displayedColumns.length">
+                No se encontraron órdenes de reparación.
+              </td>
+            </tr>
+          </table>
+        </div>
+      </div>
     </div>
   `,
   styles: `
     .orders-container {
-      padding: 1.5rem;
-      max-width: 80rem;
+      max-width: 1400px;
       margin: 0 auto;
     }
-    .header {
+    .page-toolbar {
       display: flex;
       justify-content: space-between;
-      align-items: center;
-      margin-bottom: 1rem;
+      align-items: flex-end;
+      gap: 1rem;
+      flex-wrap: wrap;
+      margin-bottom: 1.25rem;
+    }
+    .page-toolbar h2 {
+      margin: 0;
+      color: var(--app-text);
+      font-size: 1.35rem;
+      font-weight: 700;
+      letter-spacing: -0.03em;
+    }
+    .page-subtitle {
+      margin: 0.35rem 0 0;
+      color: var(--app-text-muted);
+      font-size: 0.82rem;
     }
     .filters-bar {
       display: flex;
       gap: 1rem;
       margin-bottom: 1rem;
+      padding: 1rem 1.25rem 0;
       flex-wrap: wrap;
     }
     .filter-field {
       width: 14rem;
     }
+    .table-panel {
+      overflow: hidden;
+    }
     .orders-table {
       width: 100%;
     }
-    .status-badge {
-      display: inline-block;
-      padding: 0.2rem 0.6rem;
-      border-radius: 10px;
-      font-weight: 500;
-      font-size: 0.8rem;
-      background: #e0e0e0;
-    }
-    .status-badge[data-status="ingresado"] { background: #e3f2fd; color: #0d47a1; }
-    .status-badge[data-status="en_diagnostico"] { background: #fff8e1; color: #f57f17; }
-    .status-badge[data-status="presupuestado"] { background: #f3e5f5; color: #4a148c; }
-    .status-badge[data-status="en_reparacion"] { background: #e8f5e9; color: #1b5e20; }
-    .status-badge[data-status="listo"] { background: #e0f2f1; color: #004d40; }
-    .status-badge[data-status="entregado"] { background: #eeeeee; color: #424242; }
-
     .empty-cell {
-      padding: 2rem;
+      padding: 2.5rem;
       text-align: center;
-      color: #666;
+      color: var(--app-text-muted);
     }
   `,
 })

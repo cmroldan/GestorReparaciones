@@ -16,10 +16,15 @@ describe('App', () => {
     expect(app).toBeTruthy();
   });
 
-  it('should render the router outlet', async () => {
+  it('renders the sidebar, the section header and the content outlet', async () => {
     const fixture = TestBed.createComponent(App);
+    fixture.detectChanges();
     await fixture.whenStable();
+
     const compiled = fixture.nativeElement as HTMLElement;
-    expect(compiled.querySelector('router-outlet')).toBeTruthy();
+
+    expect(compiled.querySelector('app-main-nav')).toBeTruthy();
+    expect(compiled.querySelector('app-header')).toBeTruthy();
+    expect(compiled.querySelector('main router-outlet')).toBeTruthy();
   });
 });

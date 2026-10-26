@@ -33,14 +33,19 @@ import { StockMovementDialogComponent } from '../stock-movement-dialog/stock-mov
   ],
   template: `
     <div class="inventory-container">
-      <div class="header">
-        <h1>Inventario de Repuestos y Productos</h1>
+      <div class="header page-toolbar">
+        <div>
+          <h2>Inventario de repuestos y productos</h2>
+          <p class="page-subtitle">
+            Controlá stock, precios y disponibilidad de venta de cada ítem.
+          </p>
+        </div>
         <button mat-flat-button color="primary" (click)="openCreateDialog()">
           Nuevo Ítem
         </button>
       </div>
 
-      <div class="filters-bar">
+      <div class="filters-bar panel">
         <mat-form-field appearance="outline" class="search-field">
           <mat-label>Buscar por código o nombre</mat-label>
           <input
@@ -61,141 +66,163 @@ import { StockMovementDialogComponent } from '../stock-movement-dialog/stock-mov
         </mat-checkbox>
       </div>
 
-      <table mat-table [dataSource]="items()" class="mat-elevation-z1 items-table">
-        <ng-container matColumnDef="code">
-          <th mat-header-cell *matHeaderCellDef>Código</th>
-          <td mat-cell *matCellDef="let item">{{ item.code }}</td>
-        </ng-container>
+      <div class="panel table-panel">
+        <div class="table-scroll">
+          <table mat-table [dataSource]="items()" class="items-table" aria-label="Inventario de ítems">
+            <ng-container matColumnDef="code">
+              <th mat-header-cell *matHeaderCellDef>Código</th>
+              <td mat-cell *matCellDef="let item" class="code-cell"><strong>{{ item.code }}</strong></td>
+            </ng-container>
 
-        <ng-container matColumnDef="name">
-          <th mat-header-cell *matHeaderCellDef>Nombre / Descripción</th>
-          <td mat-cell *matCellDef="let item">{{ item.name }}</td>
-        </ng-container>
+            <ng-container matColumnDef="name">
+              <th mat-header-cell *matHeaderCellDef>Nombre / Descripción</th>
+              <td mat-cell *matCellDef="let item">{{ item.name }}</td>
+            </ng-container>
 
-        <ng-container matColumnDef="type">
-          <th mat-header-cell *matHeaderCellDef>Tipo</th>
-          <td mat-cell *matCellDef="let item">{{ getTypeLabel(item.type) }}</td>
-        </ng-container>
+            <ng-container matColumnDef="type">
+              <th mat-header-cell *matHeaderCellDef>Tipo</th>
+              <td mat-cell *matCellDef="let item">{{ getTypeLabel(item.type) }}</td>
+            </ng-container>
 
-        <ng-container matColumnDef="stock">
-          <th mat-header-cell *matHeaderCellDef>Stock Actual</th>
-          <td mat-cell *matCellDef="let item" [class.low-stock-warning]="item.active && item.stock <= item.min_stock">
-            {{ item.stock }}
-            @if (item.active && item.stock <= item.min_stock) {
-              <span class="badge-low">¡Bajo!</span>
-            }
-          </td>
-        </ng-container>
+            <ng-container matColumnDef="stock">
+              <th mat-header-cell *matHeaderCellDef>Stock Actual</th>
+              <td mat-cell *matCellDef="let item" [class.low-stock-warning]="item.active && item.stock <= item.min_stock">
+                {{ item.stock }}
+                @if (item.active && item.stock <= item.min_stock) {
+                  <span class="status-badge" data-stock="low">¡Bajo!</span>
+                }
+              </td>
+            </ng-container>
 
-        <ng-container matColumnDef="min_stock">
-          <th mat-header-cell *matHeaderCellDef>Stock Mínimo</th>
-          <td mat-cell *matCellDef="let item">{{ item.min_stock }}</td>
-        </ng-container>
+            <ng-container matColumnDef="min_stock">
+              <th mat-header-cell *matHeaderCellDef>Stock Mínimo</th>
+              <td mat-cell *matCellDef="let item">{{ item.min_stock }}</td>
+            </ng-container>
 
-        <ng-container matColumnDef="price">
-          <th mat-header-cell *matHeaderCellDef>Precio Venta</th>
-          <td mat-cell *matCellDef="let item">{{ formatPrice(item.price_cents) }}</td>
-        </ng-container>
+            <ng-container matColumnDef="price">
+              <th mat-header-cell *matHeaderCellDef>Precio Venta</th>
+              <td mat-cell *matCellDef="let item">{{ formatPrice(item.price_cents) }}</td>
+            </ng-container>
 
-        <ng-container matColumnDef="is_sellable">
-          <th mat-header-cell *matHeaderCellDef>Vendible</th>
-          <td mat-cell *matCellDef="let item">{{ item.is_sellable ? 'Sí' : 'No' }}</td>
-        </ng-container>
+            <ng-container matColumnDef="is_sellable">
+              <th mat-header-cell *matHeaderCellDef>Vendible</th>
+              <td mat-cell *matCellDef="let item">{{ item.is_sellable ? 'Sí' : 'No' }}</td>
+            </ng-container>
 
-        <ng-container matColumnDef="active">
-          <th mat-header-cell *matHeaderCellDef>Estado</th>
-          <td mat-cell *matCellDef="let item">
-            <span [class.inactive-badge]="!item.active">
-              {{ item.active ? 'Activo' : 'Inactivo' }}
-            </span>
-          </td>
-        </ng-container>
+            <ng-container matColumnDef="active">
+              <th mat-header-cell *matHeaderCellDef>Estado</th>
+              <td mat-cell *matCellDef="let item">
+                @if (item.active) {
+                  <span class="status-badge" data-stock="ok">Activo</span>
+                } @else {
+                  <span class="inactive-badge">Inactivo</span>
+                }
+              </td>
+            </ng-container>
 
-        <ng-container matColumnDef="actions">
-          <th mat-header-cell *matHeaderCellDef>Acciones</th>
-          <td mat-cell *matCellDef="let item">
-            @if (item.active) {
-              <button mat-button color="primary" (click)="openMovementDialog(item)">
-                Stock
-              </button>
-              <button mat-button (click)="openEditDialog(item)">
-                Editar
-              </button>
-              <button mat-button color="warn" (click)="deactivateItem(item)">
-                Baja
-              </button>
-            } @else {
-              <span class="text-muted">-</span>
-            }
-          </td>
-        </ng-container>
+            <ng-container matColumnDef="actions">
+              <th mat-header-cell *matHeaderCellDef>Acciones</th>
+              <td mat-cell *matCellDef="let item" class="actions-cell">
+                @if (item.active) {
+                  <button mat-button color="primary" (click)="openMovementDialog(item)">
+                    Stock
+                  </button>
+                  <button mat-button (click)="openEditDialog(item)">
+                    Editar
+                  </button>
+                  <button mat-button color="warn" (click)="deactivateItem(item)">
+                    Baja
+                  </button>
+                } @else {
+                  <span class="text-muted">-</span>
+                }
+              </td>
+            </ng-container>
 
-        <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
-        <tr mat-row *matRowDef="let row; columns: displayedColumns" [class.inactive-row]="!row.active"></tr>
+            <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+            <tr mat-row *matRowDef="let row; columns: displayedColumns" [class.inactive-row]="!row.active"></tr>
 
-        <tr class="mat-row" *matNoDataRow>
-          <td class="mat-cell empty-cell" [attr.colspan]="displayedColumns.length">
-            No se encontraron ítems en el inventario.
-          </td>
-        </tr>
-      </table>
+            <tr class="mat-row" *matNoDataRow>
+              <td class="mat-cell empty-cell" [attr.colspan]="displayedColumns.length">
+                No se encontraron ítems en el inventario.
+              </td>
+            </tr>
+          </table>
+        </div>
+      </div>
     </div>
   `,
   styles: `
     .inventory-container {
-      padding: 1.5rem;
-      max-width: 80rem;
+      max-width: 1400px;
       margin: 0 auto;
     }
-    .header {
+    .page-toolbar {
       display: flex;
       justify-content: space-between;
-      align-items: center;
-      margin-bottom: 1rem;
+      align-items: flex-end;
+      gap: 1rem;
+      flex-wrap: wrap;
+      margin-bottom: 1.25rem;
+    }
+    .page-toolbar h2 {
+      margin: 0;
+      color: var(--app-text);
+      font-size: 1.35rem;
+      font-weight: 700;
+      letter-spacing: -0.03em;
+    }
+    .page-subtitle {
+      margin: 0.35rem 0 0;
+      color: var(--app-text-muted);
+      font-size: 0.82rem;
     }
     .filters-bar {
       display: flex;
       align-items: center;
       gap: 2rem;
       margin-bottom: 1rem;
+      padding: 1rem 1.25rem 0;
       flex-wrap: wrap;
     }
     .search-field {
-      width: 25rem;
+      width: min(25rem, 100%);
     }
     .low-stock-check {
       margin-bottom: 1rem;
     }
+    .table-panel {
+      overflow: hidden;
+    }
     .items-table {
       width: 100%;
     }
-    .low-stock-warning {
-      color: #b3261e;
-      font-weight: bold;
+    .code-cell,
+    .actions-cell {
+      white-space: nowrap;
     }
-    .badge-low {
-      background: #f9dedc;
-      color: #8c1d18;
-      padding: 0.1rem 0.4rem;
-      border-radius: 4px;
-      font-size: 0.75rem;
-      margin-left: 0.25rem;
+    .low-stock-warning {
+      color: var(--app-danger);
+      font-weight: 600;
+    }
+    .low-stock-warning .status-badge {
+      margin-left: 0.4rem;
     }
     .inactive-row {
       opacity: 0.6;
-      background: #fbfbfb;
     }
     .inactive-badge {
-      color: #777;
+      color: var(--app-text-subtle);
+      font-size: 0.75rem;
       font-style: italic;
     }
     .empty-cell {
-      padding: 2rem;
+      padding: 2.5rem;
+      color: var(--app-text-muted);
       text-align: center;
-      color: #666;
     }
     .text-muted {
-      color: #999;
+      color: var(--app-text-subtle);
     }
   `,
 })

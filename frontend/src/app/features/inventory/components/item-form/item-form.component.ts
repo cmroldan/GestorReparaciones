@@ -116,7 +116,8 @@ export interface ItemFormData {
       display: flex;
       flex-direction: column;
       gap: 0.5rem;
-      min-width: 22rem;
+      width: 100%;
+      min-width: min(22rem, 70vw);
       padding-top: 0.5rem;
     }
   `,

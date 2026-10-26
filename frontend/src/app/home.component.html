@@ -1,0 +1,326 @@
+<section class="dashboard">
+  <div class="hero">
+    <div class="hero-copy">
+      <p class="eyebrow">Resumen del taller</p>
+      <h2>Hola de nuevo</h2>
+      <p class="hero-subtitle">
+        Estado actual de las órdenes, la facturación y el inventario.
+      </p>
+    </div>
+
+    <nav class="quick-actions" aria-label="Accesos directos">
+      <a class="quick-link" routerLink="/ordenes">
+        <app-icon name="clipboard" [size]="18" />
+        Órdenes
+      </a>
+      <a class="quick-link" routerLink="/ventas">
+        <app-icon name="cart" [size]="18" />
+        Ventas
+      </a>
+      <a class="quick-link" routerLink="/clientes">
+        <app-icon name="users" [size]="18" />
+        Clientes
+      </a>
+      <a class="quick-link" routerLink="/inventario">
+        <app-icon name="package" [size]="18" />
+        Inventario
+      </a>
+    </nav>
+  </div>
+
+  <div class="metrics">
+    <article
+      class="metric-card"
+      data-section="orders"
+      [attr.aria-busy]="ordersSection().loading"
+    >
+      @if (ordersSection().error) {
+        <div class="section-error">
+          <p>{{ ordersSection().error }}</p>
+          <button type="button" class="retry-button" (click)="retry('orders')">
+            Reintentar
+          </button>
+        </div>
+      } @else if (ordersSection().loading) {
+        <p class="section-loading">Cargando órdenes…</p>
+      } @else {
+        <span class="metric-icon">
+          <app-icon name="clipboard" [size]="22" />
+        </span>
+        <div>
+          <p class="metric-label">Órdenes activas</p>
+          <p class="metric-value">{{ activeCount() }}</p>
+          <p class="metric-hint">{{ readyLabel() }}</p>
+        </div>
+      }
+    </article>
+
+    <article
+      class="metric-card"
+      data-section="sales"
+      [attr.aria-busy]="salesSection().loading"
+    >
+      @if (salesSection().error) {
+        <div class="section-error">
+          <p>{{ salesSection().error }}</p>
+          <button type="button" class="retry-button" (click)="retry('sales')">
+            Reintentar
+          </button>
+        </div>
+      } @else if (salesSection().loading) {
+        <p class="section-loading">Cargando ventas…</p>
+      } @else {
+        <span class="metric-icon">
+          <app-icon name="wallet" [size]="22" />
+        </span>
+        <div>
+          <p class="metric-label">Ingresos del mes</p>
+          <p class="metric-value">{{ monthTotalLabel() }}</p>
+          <p class="metric-hint">Facturación acumulada</p>
+        </div>
+      }
+    </article>
+
+    <article
+      class="metric-card"
+      data-section="stock"
+      [attr.aria-busy]="stockSection().loading"
+    >
+      @if (stockSection().error) {
+        <div class="section-error">
+          <p>{{ stockSection().error }}</p>
+          <button type="button" class="retry-button" (click)="retry('stock')">
+            Reintentar
+          </button>
+        </div>
+      } @else if (stockSection().loading) {
+        <p class="section-loading">Cargando stock…</p>
+      } @else {
+        <span class="metric-icon">
+          <app-icon name="alert-triangle" [size]="22" />
+        </span>
+        <div>
+          <p class="metric-label">Stock bajo</p>
+          <p class="metric-value">{{ lowStock().length }}</p>
+          <p class="metric-hint">Requieren reposición</p>
+        </div>
+      }
+    </article>
+  </div>
+
+  <div class="dashboard-grid">
+    <section
+      class="panel recent-orders"
+      data-section="orders"
+      [attr.aria-busy]="ordersSection().loading"
+    >
+      <div class="panel-header">
+        <div>
+          <h2 class="panel-title">Órdenes recientes</h2>
+          <p class="panel-subtitle">Últimos ingresos al taller</p>
+        </div>
+        <a class="panel-action" routerLink="/ordenes">Ver todas</a>
+      </div>
+
+      <div class="panel-body">
+        @if (ordersSection().error) {
+          <div class="section-error">
+            <p>{{ ordersSection().error }}</p>
+            <button type="button" class="retry-button" (click)="retry('orders')">
+              Reintentar
+            </button>
+          </div>
+        } @else if (ordersSection().loading) {
+          <p class="section-loading">Cargando órdenes…</p>
+        } @else if (recentRows().length === 0) {
+          <div class="empty-state">
+            <span class="empty-state-icon">
+              <app-icon name="inbox" [size]="22" />
+            </span>
+            <p class="empty-state-title">No hay órdenes registradas</p>
+            <p class="empty-state-text">
+              Registrá la primera orden para comenzar a seguir el trabajo del
+              taller.
+            </p>
+            <a class="panel-action" routerLink="/ordenes">
+              Registrar la primera orden
+            </a>
+          </div>
+        } @else {
+          <div class="table-scroll">
+            <table aria-label="Órdenes recientes">
+              <thead>
+                <tr>
+                  <th scope="col">Número</th>
+                  <th scope="col">Cliente</th>
+                  <th scope="col">Equipo</th>
+                  <th scope="col">Estado</th>
+                  <th scope="col">Ingreso</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (row of recentRows(); track row.order.id) {
+                  <tr>
+                    <td>
+                      <a class="order-link" [routerLink]="['/ordenes', row.order.id]">
+                        {{ row.order.number ?? 'Sin número' }}
+                      </a>
+                    </td>
+                    <td>{{ row.clientLabel }}</td>
+                    <td>{{ row.equipmentLabel }}</td>
+                    <td>
+                      <span class="status-badge" [attr.data-status]="row.order.status">
+                        {{ statusLabel(row.order) }}
+                      </span>
+                    </td>
+                    <td>{{ row.dateLabel }}</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        }
+      </div>
+    </section>
+
+    <section
+      class="panel finance"
+      data-section="sales"
+      [attr.aria-busy]="salesSection().loading"
+    >
+      <div class="panel-header">
+        <div>
+          <h2 class="panel-title">Ingresos del mes</h2>
+          <p class="panel-subtitle">Total facturado y tendencia diaria</p>
+        </div>
+      </div>
+
+      <div class="panel-body finance-body">
+        @if (salesSection().error) {
+          <div class="section-error">
+            <p>{{ salesSection().error }}</p>
+            <button type="button" class="retry-button" (click)="retry('sales')">
+              Reintentar
+            </button>
+          </div>
+        } @else if (salesSection().loading) {
+          <p class="section-loading">Cargando ventas…</p>
+        } @else {
+          <p class="finance-total">{{ monthTotalLabel() }}</p>
+          <p class="finance-caption">Facturado en el mes en curso</p>
+
+          @if (dailySeries().length > 0) {
+            <figure class="trend">
+              <svg
+                viewBox="0 0 320 120"
+                role="img"
+                aria-label="Tendencia diaria de ventas del mes"
+              >
+                <polyline
+                  [attr.points]="trendPolyline()"
+                  fill="none"
+                  stroke="var(--app-accent-strong)"
+                  stroke-width="2.5"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+                @for (point of trendPoints(); track $index) {
+                  <circle
+                    [attr.cx]="point.x"
+                    [attr.cy]="point.y"
+                    r="3.5"
+                    fill="var(--app-surface)"
+                    stroke="var(--app-accent-strong)"
+                    stroke-width="2"
+                  />
+                }
+              </svg>
+              <figcaption>Ventas por día del mes</figcaption>
+            </figure>
+            <ul class="visually-hidden">
+              @for (point of dailySeries(); track point.date) {
+                <li>{{ point.date }}: {{ formatCents(point.totalCents) }}</li>
+              }
+            </ul>
+          } @else {
+            <div class="empty-state">
+              <span class="empty-state-icon">
+                <app-icon name="trending-up" [size]="22" />
+              </span>
+              <p class="empty-state-title">Sin ventas este mes</p>
+              <p class="empty-state-text">
+                Cuando registres ventas vas a ver aquí la tendencia diaria.
+              </p>
+            </div>
+          }
+        }
+      </div>
+    </section>
+  </div>
+
+  <section
+    class="panel low-stock"
+    data-section="stock"
+    [attr.aria-busy]="stockSection().loading"
+  >
+    <div class="panel-header">
+      <div>
+        <h2 class="panel-title">Alertas de stock</h2>
+        <p class="panel-subtitle">Ítems que requieren reposición</p>
+      </div>
+      <a class="panel-action" routerLink="/inventario">Ver inventario</a>
+    </div>
+
+    <div class="panel-body">
+      @if (stockSection().error) {
+        <div class="section-error">
+          <p>{{ stockSection().error }}</p>
+          <button type="button" class="retry-button" (click)="retry('stock')">
+            Reintentar
+          </button>
+        </div>
+      } @else if (stockSection().loading) {
+        <p class="section-loading">Cargando stock…</p>
+      } @else if (lowStock().length === 0) {
+        <div class="empty-state">
+          <span class="empty-state-icon">
+            <app-icon name="check" [size]="22" />
+          </span>
+          <p class="empty-state-title">Sin alertas de stock</p>
+          <p class="empty-state-text">
+            Todos los ítems activos están por encima de su stock mínimo.
+          </p>
+        </div>
+      } @else {
+        <div class="table-scroll">
+          <table aria-label="Ítems con stock bajo">
+            <thead>
+              <tr>
+                <th scope="col">Código</th>
+                <th scope="col">Ítem</th>
+                <th scope="col">Stock</th>
+                <th scope="col">Mínimo</th>
+                <th scope="col">Estado</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (item of lowStock(); track item.id) {
+                <tr>
+                  <td>{{ item.code }}</td>
+                  <td>{{ item.name }}</td>
+                  <td>{{ item.stock }}</td>
+                  <td>{{ item.min_stock }}</td>
+                  <td>
+                    <span class="status-badge" [attr.data-stock]="stockState(item.stock)">
+                      {{ stockStateLabel(item.stock) }}
+                    </span>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+    </div>
+  </section>
+</section>

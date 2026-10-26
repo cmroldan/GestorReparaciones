@@ -44,13 +44,16 @@ import {
   template: `
     <div class="order-detail-container">
       <div class="top-nav">
-        <button mat-button routerLink="/ordenes">← Volver al Listado</button>
+        <button mat-button routerLink="/ordenes">
+          <span aria-hidden="true">←</span> Volver al Listado
+        </button>
       </div>
 
       @if (order(); as o) {
-        <mat-card class="order-header-card">
+        <mat-card class="order-header-card panel">
           <div class="order-header">
             <div>
+              <p class="eyebrow">Orden de servicio</p>
               <h1>Orden {{ o.number || ('#' + o.id) }}</h1>
               <span class="status-badge" [attr.data-status]="o.status">
                 {{ getStatusLabel(o.status) }}
@@ -59,8 +62,8 @@ import {
             <div class="status-actions">
               @for (next of getAvailableNextStatuses(o.status); track next) {
                 <button
-                  mat-raised-button
-                  color="accent"
+                  mat-flat-button
+                  color="primary"
                   (click)="changeStatus(next)"
                 >
                   Avanzar a {{ getStatusLabel(next) }} →
@@ -82,7 +85,7 @@ import {
 
         <div class="details-layout">
           <!-- Diagnóstico y Presupuesto -->
-          <mat-card class="section-card">
+          <mat-card class="section-card panel">
             <mat-card-header>
               <mat-card-title>Diagnóstico y Presupuesto</mat-card-title>
             </mat-card-header>
@@ -133,7 +136,7 @@ import {
           </mat-card>
 
           <!-- Repuestos Consumidos -->
-          <mat-card class="section-card">
+          <mat-card class="section-card panel">
             <mat-card-header>
               <mat-card-title>Repuestos Consumidos</mat-card-title>
             </mat-card-header>
@@ -171,7 +174,7 @@ import {
                 </p>
               }
 
-              <table mat-table [dataSource]="o.consumptions" class="mat-elevation-z1 mini-table">
+              <table mat-table [dataSource]="o.consumptions" class="mini-table">
                 <ng-container matColumnDef="code">
                   <th mat-header-cell *matHeaderCellDef>Código</th>
                   <td mat-cell *matCellDef="let c">{{ c.item_code }}</td>
@@ -200,7 +203,7 @@ import {
           </mat-card>
 
           <!-- Notas Técnicas / Work Logs -->
-          <mat-card class="section-card">
+          <mat-card class="section-card panel">
             <mat-card-header>
               <mat-card-title>Notas Técnicas</mat-card-title>
             </mat-card-header>
@@ -236,12 +239,12 @@ import {
           </mat-card>
 
           <!-- Historial de Estados -->
-          <mat-card class="section-card">
+          <mat-card class="section-card panel">
             <mat-card-header>
               <mat-card-title>Historial de Estados</mat-card-title>
             </mat-card-header>
             <mat-card-content>
-              <table mat-table [dataSource]="o.status_history" class="mat-elevation-z1 mini-table">
+              <table mat-table [dataSource]="o.status_history" class="mini-table">
                 <ng-container matColumnDef="from">
                   <th mat-header-cell *matHeaderCellDef>Estado Origen</th>
                   <td mat-cell *matCellDef="let h">
@@ -270,45 +273,59 @@ import {
   `,
   styles: `
     .order-detail-container {
-      padding: 1.5rem;
-      max-width: 80rem;
+      max-width: 1400px;
       margin: 0 auto;
     }
     .top-nav {
-      margin-bottom: 1rem;
+      margin-bottom: 0.5rem;
     }
     .order-header-card {
-      padding: 1rem;
-      margin-bottom: 1.5rem;
+      margin-bottom: 1rem;
+      padding: 0;
     }
     .order-header {
       display: flex;
       justify-content: space-between;
-      align-items: center;
+      align-items: flex-start;
+      gap: 1rem;
+      flex-wrap: wrap;
       margin-bottom: 1rem;
+      padding: 1.25rem 1.5rem 0;
     }
     .order-header h1 {
-      margin: 0 0 0.5rem 0;
+      margin: 0.15rem 0 0.5rem;
+      color: var(--app-text);
+      font-size: 1.35rem;
+      font-weight: 700;
+      letter-spacing: -0.03em;
     }
-    .status-badge {
-      display: inline-block;
-      padding: 0.25rem 0.75rem;
-      border-radius: 12px;
-      font-weight: 500;
-      font-size: 0.85rem;
-      background: #e0e0e0;
+    .eyebrow {
+      margin: 0;
+      color: var(--app-text-subtle);
+      font-size: 0.68rem;
+      font-weight: 600;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
     }
-    .status-badge[data-status="ingresado"] { background: #e3f2fd; color: #0d47a1; }
-    .status-badge[data-status="en_diagnostico"] { background: #fff8e1; color: #f57f17; }
-    .status-badge[data-status="presupuestado"] { background: #f3e5f5; color: #4a148c; }
-    .status-badge[data-status="en_reparacion"] { background: #e8f5e9; color: #1b5e20; }
-    .status-badge[data-status="listo"] { background: #e0f2f1; color: #004d40; }
-    .status-badge[data-status="entregado"] { background: #eeeeee; color: #424242; }
-
+    .status-actions {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
     .info-grid {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(18rem, 1fr));
       gap: 0.5rem;
+      padding: 0 1.5rem 1.25rem;
+    }
+    .info-grid p {
+      margin: 0;
+      color: var(--app-text-muted);
+      font-size: 0.85rem;
+    }
+    .info-grid strong {
+      color: var(--app-text);
+      font-weight: 600;
     }
     .full-width {
       grid-column: 1 / -1;
@@ -316,10 +333,12 @@ import {
     .details-layout {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(28rem, 1fr));
-      gap: 1.5rem;
+      gap: 1rem;
+      align-items: start;
     }
     .section-card {
-      margin-bottom: 1rem;
+      margin-bottom: 0;
+      padding: 1.25rem 1.5rem 1.5rem;
     }
     .budget-form {
       display: flex;
@@ -327,21 +346,34 @@ import {
       gap: 0.5rem;
       padding-top: 0.5rem;
     }
-    .add-consumption-box, .add-log-box {
+    .budget-form button {
+      align-self: flex-start;
+    }
+    .add-consumption-box,
+    .add-log-box {
       display: flex;
       gap: 0.5rem;
       align-items: center;
       margin-bottom: 1rem;
+      flex-wrap: wrap;
     }
-    .part-select { flex: 1; }
-    .part-qty { width: 6rem; }
-    .log-input { flex: 1; }
+    .part-select {
+      flex: 1;
+      min-width: 12rem;
+    }
+    .part-qty {
+      width: 6rem;
+    }
+    .log-input {
+      flex: 1;
+      min-width: 12rem;
+    }
     .mini-table {
       width: 100%;
     }
     .hint-text {
-      color: #777;
-      font-size: 0.9rem;
+      color: var(--app-text-muted);
+      font-size: 0.85rem;
     }
     .logs-list {
       list-style: none;
@@ -349,20 +381,29 @@ import {
       margin: 0;
     }
     .logs-list li {
-      padding: 0.5rem 0;
-      border-bottom: 1px solid #eee;
+      padding: 0.6rem 0;
+      border-bottom: 1px solid var(--app-border);
+    }
+    .logs-list li:last-child {
+      border-bottom: none;
     }
     .log-date {
-      font-size: 0.8rem;
-      color: #888;
+      color: var(--app-text-subtle);
+      font-size: 0.75rem;
     }
     .log-desc {
-      margin: 0.25rem 0 0 0;
+      margin: 0.25rem 0 0;
+      color: var(--app-text);
     }
     .empty-cell {
       padding: 1.5rem;
+      color: var(--app-text-muted);
       text-align: center;
-      color: #777;
+    }
+    @media (max-width: 640px) {
+      .details-layout {
+        grid-template-columns: minmax(0, 1fr);
+      }
     }
   `,
 })

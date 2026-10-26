@@ -117,12 +117,16 @@ export function stockMovementValidator(control: AbstractControl): ValidationErro
       display: flex;
       flex-direction: column;
       gap: 0.5rem;
-      min-width: 22rem;
+      width: 100%;
+      min-width: min(22rem, 70vw);
       padding-top: 0.5rem;
     }
     .current-stock {
       margin-top: 0;
-      color: #555;
+      color: var(--app-text-muted);
+    }
+    .current-stock strong {
+      color: var(--app-text);
     }
   `,
 })

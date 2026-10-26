@@ -27,14 +27,19 @@ import { formatCents } from '../../../../core/utils/money';
   ],
   template: `
     <div class="sale-list-container">
-      <div class="header-nav">
-        <h2>Historial de Ventas</h2>
+      <div class="header-nav page-toolbar">
+        <div>
+          <h2>Historial de ventas</h2>
+          <p class="page-subtitle">
+            Consultá las ventas registradas y el total acumulado del período.
+          </p>
+        </div>
         <button mat-button routerLink="/ventas">
-          ← Volver a Punto de Venta
+          <span aria-hidden="true">←</span> Volver a Punto de Venta
         </button>
       </div>
 
-      <div class="filters-bar">
+      <div class="filters-bar panel">
         <mat-form-field appearance="outline" class="filter-field">
           <mat-label>Fecha Desde</mat-label>
           <input matInput type="date" [(ngModel)]="fromDate" (change)="onFilterChange()" />
@@ -46,48 +51,52 @@ import { formatCents } from '../../../../core/utils/money';
         </mat-form-field>
       </div>
 
-      <table mat-table [dataSource]="sales()" class="mat-elevation-z1 sales-table">
-        <ng-container matColumnDef="id">
-          <th mat-header-cell *matHeaderCellDef>Nº Venta</th>
-          <td mat-cell *matCellDef="let s">#{{ s.id }}</td>
-        </ng-container>
+      <div class="panel table-panel">
+        <div class="table-scroll">
+          <table mat-table [dataSource]="sales()" class="sales-table" aria-label="Historial de ventas">
+            <ng-container matColumnDef="id">
+              <th mat-header-cell *matHeaderCellDef>Nº Venta</th>
+              <td mat-cell *matCellDef="let s"><strong>#{{ s.id }}</strong></td>
+            </ng-container>
 
-        <ng-container matColumnDef="date">
-          <th mat-header-cell *matHeaderCellDef>Fecha y Hora</th>
-          <td mat-cell *matCellDef="let s">{{ s.created_at | date: 'dd/MM/yyyy HH:mm' }}</td>
-        </ng-container>
+            <ng-container matColumnDef="date">
+              <th mat-header-cell *matHeaderCellDef>Fecha y Hora</th>
+              <td mat-cell *matCellDef="let s">{{ s.created_at | date: 'dd/MM/yyyy HH:mm' }}</td>
+            </ng-container>
 
-        <ng-container matColumnDef="items">
-          <th mat-header-cell *matHeaderCellDef>Productos</th>
-          <td mat-cell *matCellDef="let s">
-            <ul class="items-summary">
-              @for (item of s.items; track item.id) {
-                <li>
-                  {{ item.quantity }}x {{ item.item_name }} ({{ formatPrice(item.unit_price_cents) }})
-                </li>
-              }
-            </ul>
-          </td>
-        </ng-container>
+            <ng-container matColumnDef="items">
+              <th mat-header-cell *matHeaderCellDef>Productos</th>
+              <td mat-cell *matCellDef="let s">
+                <ul class="items-summary">
+                  @for (item of s.items; track item.id) {
+                    <li>
+                      {{ item.quantity }}x {{ item.item_name }} ({{ formatPrice(item.unit_price_cents) }})
+                    </li>
+                  }
+                </ul>
+              </td>
+            </ng-container>
 
-        <ng-container matColumnDef="total">
-          <th mat-header-cell *matHeaderCellDef>Total</th>
-          <td mat-cell *matCellDef="let s">
-            <strong>{{ formatPrice(s.total_cents) }}</strong>
-          </td>
-        </ng-container>
+            <ng-container matColumnDef="total">
+              <th mat-header-cell *matHeaderCellDef>Total</th>
+              <td mat-cell *matCellDef="let s">
+                <strong>{{ formatPrice(s.total_cents) }}</strong>
+              </td>
+            </ng-container>
 
-        <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
-        <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
+            <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+            <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
 
-        <tr class="mat-row" *matNoDataRow>
-          <td class="mat-cell empty-cell" [attr.colspan]="displayedColumns.length">
-            No se registraron ventas en el período consultado.
-          </td>
-        </tr>
-      </table>
+            <tr class="mat-row" *matNoDataRow>
+              <td class="mat-cell empty-cell" [attr.colspan]="displayedColumns.length">
+                No se registraron ventas en el período consultado.
+              </td>
+            </tr>
+          </table>
+        </div>
+      </div>
 
-      <mat-card class="total-accumulated-card">
+      <mat-card class="total-accumulated-card panel">
         <mat-card-content class="accumulated-content">
           <span>Total Acumulado del Período:</span>
           <strong class="accumulated-number">{{ formatPrice(totalAccumulatedCents()) }}</strong>
@@ -97,23 +106,41 @@ import { formatCents } from '../../../../core/utils/money';
   `,
   styles: `
     .sale-list-container {
-      padding: 1.5rem;
-      max-width: 65rem;
+      max-width: 1400px;
       margin: 0 auto;
     }
-    .header-nav {
+    .page-toolbar {
       display: flex;
       justify-content: space-between;
-      align-items: center;
-      margin-bottom: 1rem;
+      align-items: flex-end;
+      gap: 1rem;
+      flex-wrap: wrap;
+      margin-bottom: 1.25rem;
+    }
+    .page-toolbar h2 {
+      margin: 0;
+      color: var(--app-text);
+      font-size: 1.35rem;
+      font-weight: 700;
+      letter-spacing: -0.03em;
+    }
+    .page-subtitle {
+      margin: 0.35rem 0 0;
+      color: var(--app-text-muted);
+      font-size: 0.82rem;
     }
     .filters-bar {
       display: flex;
       gap: 1rem;
       margin-bottom: 1rem;
+      padding: 1rem 1.25rem 0;
+      flex-wrap: wrap;
     }
     .filter-field {
       width: 14rem;
+    }
+    .table-panel {
+      overflow: hidden;
     }
     .sales-table {
       width: 100%;
@@ -122,27 +149,34 @@ import { formatCents } from '../../../../core/utils/money';
       list-style: none;
       padding: 0;
       margin: 0.25rem 0;
-      font-size: 0.9rem;
+      color: var(--app-text-muted);
+      font-size: 0.82rem;
     }
     .total-accumulated-card {
-      margin-top: 1.5rem;
-      background: #f1f8e9;
-      border: 1px solid #c8e6c9;
+      margin-top: 1rem;
+      padding: 1.25rem 1.5rem;
+      border-color: rgb(52 211 153 / 30%);
+      background: var(--app-success-soft);
     }
     .accumulated-content {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      font-size: 1.25rem;
+      gap: 1rem;
+      flex-wrap: wrap;
+      color: var(--app-text-muted);
+      font-size: 0.95rem;
     }
     .accumulated-number {
-      color: #2e7d32;
+      color: var(--app-success);
       font-size: 1.5rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
     }
     .empty-cell {
-      padding: 2rem;
+      padding: 2.5rem;
+      color: var(--app-text-muted);
       text-align: center;
-      color: #777;
     }
   `,
 })

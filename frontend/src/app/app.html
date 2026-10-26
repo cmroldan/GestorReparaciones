@@ -1,2 +1,9 @@
-<app-main-nav />
-<router-outlet />
+<div class="app-shell">
+  <app-main-nav class="app-sidebar" />
+  <div class="app-main">
+    <app-header />
+    <main class="app-content">
+      <router-outlet />
+    </main>
+  </div>
+</div>

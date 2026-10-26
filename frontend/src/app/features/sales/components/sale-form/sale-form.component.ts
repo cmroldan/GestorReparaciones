@@ -42,14 +42,19 @@ export interface CartLine {
   ],
   template: `
     <div class="sale-form-container">
-      <div class="header-nav">
-        <h2>Punto de Venta (Mostrador)</h2>
+      <div class="header-nav page-toolbar">
+        <div>
+          <h2>Punto de venta</h2>
+          <p class="page-subtitle">
+            Registrá la venta de insumos y accesorios con stock disponible.
+          </p>
+        </div>
         <a mat-button color="primary" routerLink="/ventas/historial">
           Ver Historial de Ventas →
         </a>
       </div>
 
-      <mat-card class="add-item-card">
+      <mat-card class="add-item-card panel">
         <mat-card-content>
           <div class="selection-row">
             <mat-form-field appearance="outline" class="item-select">
@@ -80,52 +85,64 @@ export interface CartLine {
         </mat-card-content>
       </mat-card>
 
-      <mat-card class="cart-card">
+      <mat-card class="cart-card panel">
         <mat-card-header>
           <mat-card-title>Detalle de la Venta</mat-card-title>
+          <mat-card-subtitle>
+            El total se calcula sobre los precios unitarios del catálogo.
+          </mat-card-subtitle>
         </mat-card-header>
         <mat-card-content>
-          <table mat-table [dataSource]="cart" class="mat-elevation-z1 cart-table">
-            <ng-container matColumnDef="name">
-              <th mat-header-cell *matHeaderCellDef>Producto</th>
-              <td mat-cell *matCellDef="let line">{{ line.item_name }}</td>
-            </ng-container>
+          <div class="table-scroll">
+            <table mat-table [dataSource]="cart" class="cart-table" aria-label="Detalle de la venta">
+              <ng-container matColumnDef="name">
+                <th mat-header-cell *matHeaderCellDef>Producto</th>
+                <td mat-cell *matCellDef="let line">{{ line.item_name }}</td>
+              </ng-container>
 
-            <ng-container matColumnDef="unit_price">
-              <th mat-header-cell *matHeaderCellDef>Precio Unitario</th>
-              <td mat-cell *matCellDef="let line">{{ formatPrice(line.price_cents) }}</td>
-            </ng-container>
+              <ng-container matColumnDef="unit_price">
+                <th mat-header-cell *matHeaderCellDef>Precio Unitario</th>
+                <td mat-cell *matCellDef="let line">{{ formatPrice(line.price_cents) }}</td>
+              </ng-container>
 
-            <ng-container matColumnDef="quantity">
-              <th mat-header-cell *matHeaderCellDef>Cantidad</th>
-              <td mat-cell *matCellDef="let line">{{ line.quantity }}</td>
-            </ng-container>
+              <ng-container matColumnDef="quantity">
+                <th mat-header-cell *matHeaderCellDef>Cantidad</th>
+                <td mat-cell *matCellDef="let line">{{ line.quantity }}</td>
+              </ng-container>
 
-            <ng-container matColumnDef="subtotal">
-              <th mat-header-cell *matHeaderCellDef>Subtotal</th>
-              <td mat-cell *matCellDef="let line">
-                {{ formatPrice(line.price_cents * line.quantity) }}
-              </td>
-            </ng-container>
+              <ng-container matColumnDef="subtotal">
+                <th mat-header-cell *matHeaderCellDef>Subtotal</th>
+                <td mat-cell *matCellDef="let line">
+                  {{ formatPrice(line.price_cents * line.quantity) }}
+                </td>
+              </ng-container>
 
-            <ng-container matColumnDef="actions">
-              <th mat-header-cell *matHeaderCellDef></th>
-              <td mat-cell *matCellDef="let line; let i = index">
-                <button mat-icon-button color="warn" (click)="removeFromCart(i)">
-                  ✕
-                </button>
-              </td>
-            </ng-container>
+              <ng-container matColumnDef="actions">
+                <th mat-header-cell *matHeaderCellDef>
+                  <span class="visually-hidden">Acciones</span>
+                </th>
+                <td mat-cell *matCellDef="let line; let i = index">
+                  <button
+                    mat-icon-button
+                    color="warn"
+                    aria-label="Quitar producto del carrito"
+                    (click)="removeFromCart(i)"
+                  >
+                    <span aria-hidden="true">✕</span>
+                  </button>
+                </td>
+              </ng-container>
 
-            <tr mat-header-row *matHeaderRowDef="cartColumns"></tr>
-            <tr mat-row *matRowDef="let row; columns: cartColumns"></tr>
+              <tr mat-header-row *matHeaderRowDef="cartColumns"></tr>
+              <tr mat-row *matRowDef="let row; columns: cartColumns"></tr>
 
-            <tr class="mat-row" *matNoDataRow>
-              <td class="mat-cell empty-cell" [attr.colspan]="cartColumns.length">
-                El carrito de venta está vacío.
-              </td>
-            </tr>
-          </table>
+              <tr class="mat-row" *matNoDataRow>
+                <td class="mat-cell empty-cell" [attr.colspan]="cartColumns.length">
+                  El carrito de venta está vacío.
+                </td>
+              </tr>
+            </table>
+          </div>
 
           <div class="cart-summary">
             <div class="total-box">
@@ -134,8 +151,8 @@ export interface CartLine {
             </div>
 
             <button
-              mat-raised-button
-              color="accent"
+              mat-flat-button
+              color="primary"
               class="confirm-button"
               [disabled]="!canSubmit() || submitting"
               (click)="submit()"
@@ -149,18 +166,32 @@ export interface CartLine {
   `,
   styles: `
     .sale-form-container {
-      padding: 1.5rem;
-      max-width: 65rem;
+      max-width: 1400px;
       margin: 0 auto;
     }
-    .header-nav {
+    .page-toolbar {
       display: flex;
       justify-content: space-between;
-      align-items: center;
-      margin-bottom: 1rem;
+      align-items: flex-end;
+      gap: 1rem;
+      flex-wrap: wrap;
+      margin-bottom: 1.25rem;
+    }
+    .page-toolbar h2 {
+      margin: 0;
+      color: var(--app-text);
+      font-size: 1.35rem;
+      font-weight: 700;
+      letter-spacing: -0.03em;
+    }
+    .page-subtitle {
+      margin: 0.35rem 0 0;
+      color: var(--app-text-muted);
+      font-size: 0.82rem;
     }
     .add-item-card {
-      margin-bottom: 1.5rem;
+      margin-bottom: 1rem;
+      padding: 1.25rem 1.5rem 0.5rem;
     }
     .selection-row {
       display: flex;
@@ -171,13 +202,14 @@ export interface CartLine {
     }
     .item-select {
       flex: 1;
-      min-width: 20rem;
+      min-width: min(20rem, 100%);
     }
     .qty-field {
       width: 7rem;
     }
     .cart-card {
-      margin-bottom: 2rem;
+      margin-bottom: 0;
+      padding: 1.25rem 1.5rem 1.5rem;
     }
     .cart-table {
       width: 100%;
@@ -187,27 +219,33 @@ export interface CartLine {
       display: flex;
       justify-content: space-between;
       align-items: center;
+      gap: 1rem;
+      flex-wrap: wrap;
       margin-top: 1.5rem;
       padding-top: 1rem;
-      border-top: 1px solid #ddd;
+      border-top: 1px solid var(--app-border);
     }
     .total-box {
-      font-size: 1.25rem;
       display: flex;
       gap: 0.75rem;
       align-items: center;
+      color: var(--app-text-muted);
+      font-size: 0.95rem;
     }
     .total-amount {
-      color: #1b5e20;
+      color: var(--app-success);
+      font-size: 1.4rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
     }
     .confirm-button {
-      font-size: 1.1rem;
+      font-size: 0.95rem;
       padding: 0.75rem 2rem;
     }
     .empty-cell {
-      padding: 2rem;
+      padding: 2.5rem;
+      color: var(--app-text-muted);
       text-align: center;
-      color: #777;
     }
   `,
 })
