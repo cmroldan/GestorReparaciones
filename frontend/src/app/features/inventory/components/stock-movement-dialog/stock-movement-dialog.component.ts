@@ -17,6 +17,7 @@ import {
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
+import { finalize } from 'rxjs';
 
 import { Item } from '../../../../core/models/item.model';
 import { StockMovementCreate } from '../../../../core/models/stock-movement.model';
@@ -78,6 +79,9 @@ export function stockMovementValidator(control: AbstractControl): ValidationErro
             required
           />
           <mat-hint>Para entradas use números positivos. Para ajustes use + o -.</mat-hint>
+          @if (form.hasError('deltaRequired')) {
+            <mat-error>La variación debe ser distinta de cero</mat-error>
+          }
           @if (form.hasError('positiveEntryRequired')) {
             <mat-error>La entrada debe ser un número positivo</mat-error>
           }
@@ -98,7 +102,12 @@ export function stockMovementValidator(control: AbstractControl): ValidationErro
     </mat-dialog-content>
     <mat-dialog-actions align="end">
       <button mat-button mat-dialog-close>Cancelar</button>
-      <button mat-flat-button color="primary" [disabled]="form.invalid" (click)="submit()">
+      <button
+        mat-flat-button
+        color="primary"
+        [disabled]="form.invalid || submitting"
+        (click)="submit()"
+      >
         Registrar Movimiento
       </button>
     </mat-dialog-actions>
@@ -119,6 +128,7 @@ export function stockMovementValidator(control: AbstractControl): ValidationErro
 })
 export class StockMovementDialogComponent {
   form: FormGroup;
+  submitting = false;
 
   constructor(
     private readonly fb: FormBuilder,
@@ -139,7 +149,7 @@ export class StockMovementDialogComponent {
   }
 
   submit(): void {
-    if (this.form.invalid) return;
+    if (this.submitting || this.form.invalid) return;
     const val = this.form.value;
     const payload: StockMovementCreate = {
       item_id: this.data.item.id,
@@ -148,9 +158,13 @@ export class StockMovementDialogComponent {
       reason: val.reason && val.reason.trim() ? val.reason.trim() : null,
     };
 
-    this.itemService.createMovement(payload).subscribe({
-      next: (res) => this.dialogRef?.close(res),
-    });
+    this.submitting = true;
+    this.itemService
+      .createMovement(payload)
+      .pipe(finalize(() => (this.submitting = false)))
+      .subscribe({
+        next: (res) => this.dialogRef?.close(res),
+      });
   }
 }
 

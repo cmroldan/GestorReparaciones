@@ -12,6 +12,7 @@ import { RouterModule } from '@angular/router';
       <a mat-button routerLink="/" class="brand">Taller de Reparaciones</a>
       <span class="spacer"></span>
       <nav class="nav-links">
+        <a mat-button routerLink="/">Inicio</a>
         <a mat-button routerLink="/clientes">Clientes</a>
         <a mat-button routerLink="/inventario">Inventario</a>
         <a mat-button routerLink="/ordenes">Órdenes</a>

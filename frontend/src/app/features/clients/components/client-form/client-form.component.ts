@@ -16,6 +16,7 @@ import {
 } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
+import { finalize } from 'rxjs';
 
 import { Client, ClientCreate, ClientUpdate } from '../../../../core/models/client.model';
 import { ClientService } from '../../../../core/services/client.service';
@@ -94,7 +95,12 @@ export function atLeastOneContact(control: AbstractControl): ValidationErrors | 
     </mat-dialog-content>
     <mat-dialog-actions align="end">
       <button mat-button mat-dialog-close>Cancelar</button>
-      <button mat-flat-button color="primary" [disabled]="form.invalid" (click)="submit()">
+      <button
+        mat-flat-button
+        color="primary"
+        [disabled]="form.invalid || submitting"
+        (click)="submit()"
+      >
         Guardar
       </button>
     </mat-dialog-actions>
@@ -116,6 +122,7 @@ export function atLeastOneContact(control: AbstractControl): ValidationErrors | 
 })
 export class ClientFormComponent {
   form: FormGroup;
+  submitting = false;
 
   constructor(
     private readonly fb: FormBuilder,
@@ -150,17 +157,25 @@ export class ClientFormComponent {
   }
 
   submit(): void {
-    if (this.form.invalid) return;
+    if (this.submitting || this.form.invalid) return;
     const payload = this.toPayload();
 
     if (this.data.mode === 'create') {
-      this.clientService.create(payload as ClientCreate).subscribe({
-        next: (created) => this.dialogRef?.close(created),
-      });
+      this.submitting = true;
+      this.clientService
+        .create(payload as ClientCreate)
+        .pipe(finalize(() => (this.submitting = false)))
+        .subscribe({
+          next: (created) => this.dialogRef?.close(created),
+        });
     } else if (this.data.client) {
-      this.clientService.update(this.data.client.id, payload as ClientUpdate).subscribe({
-        next: (updated) => this.dialogRef?.close(updated),
-      });
+      this.submitting = true;
+      this.clientService
+        .update(this.data.client.id, payload as ClientUpdate)
+        .pipe(finalize(() => (this.submitting = false)))
+        .subscribe({
+          next: (updated) => this.dialogRef?.close(updated),
+        });
     }
   }
 }

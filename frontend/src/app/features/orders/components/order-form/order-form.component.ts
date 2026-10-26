@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, Inject, OnInit, Optional, signal } from '@angular/core';
+import { Component, Inject, OnDestroy, OnInit, Optional, signal } from '@angular/core';
 import {
   FormBuilder,
   FormGroup,
@@ -15,6 +15,7 @@ import {
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
+import { Subscription, finalize } from 'rxjs';
 
 import { Client } from '../../../../core/models/client.model';
 import { EquipmentWithOrderCount } from '../../../../core/models/equipment.model';
@@ -97,7 +98,12 @@ export interface OrderFormData {
     </mat-dialog-content>
     <mat-dialog-actions align="end">
       <button mat-button mat-dialog-close>Cancelar</button>
-      <button mat-flat-button color="primary" [disabled]="form.invalid" (click)="submit()">
+      <button
+        mat-flat-button
+        color="primary"
+        [disabled]="form.invalid || submitting"
+        (click)="submit()"
+      >
         Crear Orden
       </button>
     </mat-dialog-actions>
@@ -115,10 +121,12 @@ export interface OrderFormData {
     }
   `,
 })
-export class OrderFormComponent implements OnInit {
+export class OrderFormComponent implements OnInit, OnDestroy {
   form: FormGroup;
   clients = signal<Client[]>([]);
   equipments = signal<EquipmentWithOrderCount[]>([]);
+  submitting = false;
+  private clientRequest?: Subscription;
 
   constructor(
     private readonly fb: FormBuilder,
@@ -149,13 +157,20 @@ export class OrderFormComponent implements OnInit {
     });
   }
 
-  onClientChange(clientId: number): void {
-    if (!clientId) {
-      this.equipments.set([]);
-      this.form.patchValue({ equipmentId: '' });
-      return;
-    }
-    this.clientService.get(clientId).subscribe({
+  ngOnDestroy(): void {
+    this.clientRequest?.unsubscribe();
+  }
+
+  onClientChange(clientId: number | string): void {
+    // Cancelar la consulta anterior para que una respuesta vieja no pise la lista actual.
+    this.clientRequest?.unsubscribe();
+    this.equipments.set([]);
+    this.form.patchValue({ equipmentId: '' });
+
+    const id = Number(clientId);
+    if (!id) return;
+
+    this.clientRequest = this.clientService.get(id).subscribe({
       next: (detail) => {
         this.equipments.set(detail.equipments || []);
         if (detail.equipments && detail.equipments.length === 1) {
@@ -166,7 +181,7 @@ export class OrderFormComponent implements OnInit {
   }
 
   submit(): void {
-    if (this.form.invalid) return;
+    if (this.submitting || this.form.invalid) return;
     const val = this.form.value;
     const payload: ServiceOrderCreate = {
       client_id: Number(val.clientId),
@@ -175,9 +190,13 @@ export class OrderFormComponent implements OnInit {
       notes: val.notes && val.notes.trim() ? val.notes.trim() : null,
     };
 
-    this.orderService.create(payload).subscribe({
-      next: (created) => this.dialogRef?.close(created),
-    });
+    this.submitting = true;
+    this.orderService
+      .create(payload)
+      .pipe(finalize(() => (this.submitting = false)))
+      .subscribe({
+        next: (created) => this.dialogRef?.close(created),
+      });
   }
 }
 

@@ -17,11 +17,13 @@ describe('MainNavComponent', () => {
 
     expect(links.map((link) => link.getAttribute('href'))).toEqual([
       '/',
+      '/',
       '/clientes',
       '/inventario',
       '/ordenes',
       '/ventas',
     ]);
     expect(links[0].textContent?.trim()).toBe('Taller de Reparaciones');
+    expect(links[1].textContent?.trim()).toBe('Inicio');
   });
 });

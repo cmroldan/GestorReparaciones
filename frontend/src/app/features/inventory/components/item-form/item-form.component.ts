@@ -1,13 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { Component, Inject, OnInit, Optional } from '@angular/core';
-import {
-  AbstractControl,
-  FormBuilder,
-  FormGroup,
-  ReactiveFormsModule,
-  ValidationErrors,
-  Validators,
-} from '@angular/forms';
+import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import {
   MAT_DIALOG_DATA,
@@ -17,22 +10,17 @@ import {
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
+import { finalize } from 'rxjs';
 
 import { Item, ItemCreate, ItemType, ItemUpdate } from '../../../../core/models/item.model';
 import { ItemService } from '../../../../core/services/item.service';
 import { nextItemCode } from '../../../../core/utils/item-code';
 import { formatCents, parseCents } from '../../../../core/utils/money';
+import { moneyValidator } from '../../../../core/utils/money-validator';
 
 export interface ItemFormData {
   mode: 'create' | 'edit';
   item?: Item;
-}
-
-export function moneyValidator(control: AbstractControl): ValidationErrors | null {
-  if (!control.value && control.value !== 0) return { required: true };
-  const cents = parseCents(String(control.value));
-  if (cents === null || cents < 0) return { invalidMoney: true };
-  return null;
 }
 
 @Component({
@@ -113,7 +101,12 @@ export function moneyValidator(control: AbstractControl): ValidationErrors | nul
     </mat-dialog-content>
     <mat-dialog-actions align="end">
       <button mat-button mat-dialog-close>Cancelar</button>
-      <button mat-flat-button color="primary" [disabled]="form.invalid" (click)="submit()">
+      <button
+        mat-flat-button
+        color="primary"
+        [disabled]="form.invalid || submitting"
+        (click)="submit()"
+      >
         Guardar
       </button>
     </mat-dialog-actions>
@@ -130,6 +123,7 @@ export function moneyValidator(control: AbstractControl): ValidationErrors | nul
 })
 export class ItemFormComponent implements OnInit {
   form: FormGroup;
+  submitting = false;
 
   constructor(
     private readonly fb: FormBuilder,
@@ -204,17 +198,25 @@ export class ItemFormComponent implements OnInit {
   }
 
   submit(): void {
-    if (this.form.invalid) return;
+    if (this.submitting || this.form.invalid) return;
     const payload = this.toPayload();
 
     if (this.data.mode === 'create') {
-      this.itemService.create(payload as ItemCreate).subscribe({
-        next: (created) => this.dialogRef?.close(created),
-      });
+      this.submitting = true;
+      this.itemService
+        .create(payload as ItemCreate)
+        .pipe(finalize(() => (this.submitting = false)))
+        .subscribe({
+          next: (created) => this.dialogRef?.close(created),
+        });
     } else if (this.data.item) {
-      this.itemService.update(this.data.item.id, payload as ItemUpdate).subscribe({
-        next: (updated) => this.dialogRef?.close(updated),
-      });
+      this.submitting = true;
+      this.itemService
+        .update(this.data.item.id, payload as ItemUpdate)
+        .pipe(finalize(() => (this.submitting = false)))
+        .subscribe({
+          next: (updated) => this.dialogRef?.close(updated),
+        });
     }
   }
 }

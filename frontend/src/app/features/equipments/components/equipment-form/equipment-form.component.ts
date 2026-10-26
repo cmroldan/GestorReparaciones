@@ -15,6 +15,7 @@ import {
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
+import { finalize } from 'rxjs';
 
 import {
   Equipment,
@@ -83,7 +84,12 @@ export interface EquipmentFormData {
     </mat-dialog-content>
     <mat-dialog-actions align="end">
       <button mat-button mat-dialog-close>Cancelar</button>
-      <button mat-flat-button color="primary" [disabled]="form.invalid" (click)="submit()">
+      <button
+        mat-flat-button
+        color="primary"
+        [disabled]="form.invalid || submitting"
+        (click)="submit()"
+      >
         Guardar
       </button>
     </mat-dialog-actions>
@@ -100,6 +106,7 @@ export interface EquipmentFormData {
 })
 export class EquipmentFormComponent {
   form: FormGroup;
+  submitting = false;
   readonly types: EquipmentType[] = ['notebook', 'desktop', 'printer'];
   readonly typeLabels: Record<EquipmentType, string> = {
     notebook: 'Notebook',
@@ -152,17 +159,25 @@ export class EquipmentFormComponent {
   }
 
   submit(): void {
-    if (this.form.invalid) return;
+    if (this.submitting || this.form.invalid) return;
     const payload = this.toPayload();
 
     if (this.data.mode === 'create') {
-      this.equipmentService.create(payload as EquipmentCreate).subscribe({
-        next: (created) => this.dialogRef?.close(created),
-      });
+      this.submitting = true;
+      this.equipmentService
+        .create(payload as EquipmentCreate)
+        .pipe(finalize(() => (this.submitting = false)))
+        .subscribe({
+          next: (created) => this.dialogRef?.close(created),
+        });
     } else if (this.data.equipment) {
-      this.equipmentService.update(this.data.equipment.id, payload as EquipmentUpdate).subscribe({
-        next: (updated) => this.dialogRef?.close(updated),
-      });
+      this.submitting = true;
+      this.equipmentService
+        .update(this.data.equipment.id, payload as EquipmentUpdate)
+        .pipe(finalize(() => (this.submitting = false)))
+        .subscribe({
+          next: (updated) => this.dialogRef?.close(updated),
+        });
     }
   }
 }

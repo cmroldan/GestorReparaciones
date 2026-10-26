@@ -1,12 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnInit, signal } from '@angular/core';
-import {
-  FormBuilder,
-  FormGroup,
-  FormsModule,
-  ReactiveFormsModule,
-  Validators,
-} from '@angular/forms';
+import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -25,6 +19,7 @@ import { ItemService } from '../../../../core/services/item.service';
 import { NotificationService } from '../../../../core/services/notification.service';
 import { ServiceOrderService } from '../../../../core/services/service-order.service';
 import { formatCents, parseCents } from '../../../../core/utils/money';
+import { optionalMoneyValidator } from '../../../../core/utils/money-validator';
 import {
   ORDER_STATUS_LABELS,
   nextStatuses,
@@ -110,6 +105,9 @@ import {
                     formControlName="budgetAmount"
                     placeholder="ej. 15.000,00"
                   />
+                  @if (budgetForm.get('budgetAmount')?.hasError('invalidMoney')) {
+                    <mat-error>Ingrese un importe válido (ej. 1250,50)</mat-error>
+                  }
                 </mat-form-field>
 
                 <mat-form-field appearance="outline">
@@ -389,7 +387,7 @@ export class OrderDetailComponent implements OnInit {
   ) {
     this.budgetForm = this.fb.group({
       diagnosis: [''],
-      budgetAmount: [''],
+      budgetAmount: ['', [optionalMoneyValidator]],
       budgetDetail: [''],
     });
   }
@@ -407,15 +405,21 @@ export class OrderDetailComponent implements OnInit {
     this.orderService.get(this.orderId).subscribe({
       next: (data) => {
         this.order.set(data);
-        this.budgetForm.patchValue({
-          diagnosis: data.diagnosis ?? '',
-          budgetAmount:
-            data.budget_amount_cents !== null && data.budget_amount_cents !== undefined
-              ? formatCents(data.budget_amount_cents).replace('$ ', '')
-              : '',
-          budgetDetail: data.budget_detail ?? '',
-        });
+        if (this.budgetForm.pristine) {
+          this.patchBudgetForm(data);
+        }
       },
+    });
+  }
+
+  private patchBudgetForm(data: ServiceOrderDetail): void {
+    this.budgetForm.patchValue({
+      diagnosis: data.diagnosis ?? '',
+      budgetAmount:
+        data.budget_amount_cents !== null && data.budget_amount_cents !== undefined
+          ? formatCents(data.budget_amount_cents).replace('$ ', '')
+          : '',
+      budgetDetail: data.budget_detail ?? '',
     });
   }
 
@@ -445,8 +449,14 @@ export class OrderDetailComponent implements OnInit {
   }
 
   saveBudget(): void {
+    if (this.budgetForm.invalid) return;
+
     const val = this.budgetForm.value;
-    const cents = val.budgetAmount ? parseCents(val.budgetAmount) : null;
+    const rawAmount = val.budgetAmount;
+    const blank =
+      rawAmount === null || rawAmount === undefined || String(rawAmount).trim().length === 0;
+    const cents = blank ? null : parseCents(String(rawAmount));
+
     this.orderService
       .update(this.orderId, {
         diagnosis: val.diagnosis && val.diagnosis.trim() ? val.diagnosis.trim() : null,
@@ -456,6 +466,7 @@ export class OrderDetailComponent implements OnInit {
       .subscribe({
         next: () => {
           this.notificationService.success('Diagnóstico y presupuesto guardados');
+          this.budgetForm.markAsPristine();
           this.loadOrder();
         },
       });

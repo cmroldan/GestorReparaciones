@@ -65,6 +65,39 @@ describe('ItemFormComponent', () => {
     expect(form.form.get('code')?.value).toBe('MANUAL-01');
   });
 
+  it('sends one request for a double submit and resets the flag when it finishes', () => {
+    const request$ = new Subject<any>();
+    let createCalls = 0;
+    itemService = {
+      create: () => {
+        createCalls += 1;
+        return request$;
+      },
+      update: () => of({} as any),
+    };
+    const form = new ItemFormComponent(fb, itemService, dialogRef, { mode: 'create' });
+    form.form.patchValue({
+      code: 'SKU-0001',
+      name: 'Cable',
+      type: 'part',
+      price: '10,00',
+      cost: '5,00',
+      stock: 1,
+      minStock: 1,
+    });
+
+    form.submit();
+    form.submit();
+
+    expect(createCalls).toBe(1);
+    expect(form.submitting).toBe(true);
+
+    request$.next({ id: 1 } as any);
+    request$.complete();
+
+    expect(form.submitting).toBe(false);
+  });
+
   it('does not request item codes when editing', () => {
     let listCalls = 0;
     itemService = {

@@ -9,6 +9,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MatTableModule } from '@angular/material/table';
 import { RouterModule } from '@angular/router';
+import { finalize } from 'rxjs';
 
 import { Item } from '../../../../core/models/item.model';
 import { SaleCreate } from '../../../../core/models/sale.model';
@@ -136,7 +137,7 @@ export interface CartLine {
               mat-raised-button
               color="accent"
               class="confirm-button"
-              [disabled]="!canSubmit()"
+              [disabled]="!canSubmit() || submitting"
               (click)="submit()"
             >
               Confirmar Venta
@@ -215,6 +216,7 @@ export class SaleFormComponent implements OnInit {
   cart: CartLine[] = [];
   selectedItemId: number | null = null;
   selectedQuantity = 1;
+  submitting = false;
 
   cartColumns = ['name', 'unit_price', 'quantity', 'subtotal', 'actions'];
 
@@ -276,7 +278,8 @@ export class SaleFormComponent implements OnInit {
   }
 
   submit(): void {
-    if (!this.canSubmit()) return;
+    if (this.submitting || !this.canSubmit()) return;
+    this.submitting = true;
 
     // Solo se envían item_id y quantity, el backend calcula el total.
     const payload: SaleCreate = {
@@ -286,14 +289,17 @@ export class SaleFormComponent implements OnInit {
       })),
     };
 
-    this.saleService.create(payload).subscribe({
-      next: (sale) => {
-        this.notificationService.success(
-          `Venta #${sale.id} confirmada. Total: ${formatCents(sale.total_cents)}`,
-        );
-        this.cart = [];
-        this.loadSellableItems();
-      },
-    });
+    this.saleService
+      .create(payload)
+      .pipe(finalize(() => (this.submitting = false)))
+      .subscribe({
+        next: (sale) => {
+          this.notificationService.success(
+            `Venta #${sale.id} confirmada. Total: ${formatCents(sale.total_cents)}`,
+          );
+          this.cart = [];
+          this.loadSellableItems();
+        },
+      });
   }
 }

@@ -1,6 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
-import { of } from 'rxjs';
+import { of, Subject } from 'rxjs';
 
 import { ItemService } from '../../../../core/services/item.service';
 import { NotificationService } from '../../../../core/services/notification.service';
@@ -54,6 +54,35 @@ describe('SaleFormComponent', () => {
 
     component.cart = [{ item_id: 1, quantity: 2, item_name: 'Mouse', price_cents: 500 }];
     expect(component.canSubmit()).toBe(true);
+  });
+
+  it('sends exactly one sale when submit is triggered twice while pending', () => {
+    const request$ = new Subject<any>();
+    let createCalls = 0;
+    saleService = {
+      create: () => {
+        createCalls += 1;
+        return request$;
+      },
+    };
+    component = new SaleFormComponent(saleService, itemService, notificationService);
+    component.cart = [{ item_id: 7, quantity: 2, item_name: 'Cable', price_cents: 1000 }];
+
+    component.submit();
+    component.submit();
+
+    expect(createCalls).toBe(1);
+    expect(component.submitting).toBe(true);
+
+    request$.next({
+      id: 1,
+      total_cents: 2000,
+      created_at: '2026-10-24T12:00:00Z',
+      items: [],
+    });
+    request$.complete();
+
+    expect(component.submitting).toBe(false);
   });
 
   it('links to the sales history route', async () => {

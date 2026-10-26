@@ -10,10 +10,14 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatTableModule } from '@angular/material/table';
 import { Router, RouterModule } from '@angular/router';
 
+import { Client } from '../../../../core/models/client.model';
+import { Equipment } from '../../../../core/models/equipment.model';
 import {
   OrderStatus,
   ServiceOrder,
 } from '../../../../core/models/service-order.model';
+import { ClientService } from '../../../../core/services/client.service';
+import { EquipmentService } from '../../../../core/services/equipment.service';
 import { ServiceOrderService } from '../../../../core/services/service-order.service';
 import { ORDER_STATUS_LABELS } from '../../../../core/utils/order-status';
 import { OrderFormComponent } from '../order-form/order-form.component';
@@ -54,6 +58,16 @@ import { OrderFormComponent } from '../order-form/order-form.component';
         </mat-form-field>
 
         <mat-form-field appearance="outline" class="filter-field">
+          <mat-label>Cliente</mat-label>
+          <mat-select [(ngModel)]="clientId" (selectionChange)="onFilterChange()">
+            <mat-option value="">Todos los clientes</mat-option>
+            @for (c of clients(); track c.id) {
+              <mat-option [value]="c.id">{{ c.first_name }} {{ c.last_name }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="filter-field">
           <mat-label>Fecha Desde</mat-label>
           <input matInput type="date" [(ngModel)]="fromDate" (change)="onFilterChange()" />
         </mat-form-field>
@@ -77,14 +91,14 @@ import { OrderFormComponent } from '../order-form/order-form.component';
           <td mat-cell *matCellDef="let o">{{ o.entry_date | date: 'dd/MM/yyyy HH:mm' }}</td>
         </ng-container>
 
-        <ng-container matColumnDef="client_id">
-          <th mat-header-cell *matHeaderCellDef>ID Cliente</th>
-          <td mat-cell *matCellDef="let o">{{ o.client_id }}</td>
+        <ng-container matColumnDef="client">
+          <th mat-header-cell *matHeaderCellDef>Cliente</th>
+          <td mat-cell *matCellDef="let o">{{ clientName(o.client_id) }}</td>
         </ng-container>
 
-        <ng-container matColumnDef="equipment_id">
-          <th mat-header-cell *matHeaderCellDef>ID Equipo</th>
-          <td mat-cell *matCellDef="let o">{{ o.equipment_id }}</td>
+        <ng-container matColumnDef="equipment">
+          <th mat-header-cell *matHeaderCellDef>Equipo</th>
+          <td mat-cell *matCellDef="let o">{{ equipmentLabel(o.equipment_id) }}</td>
         </ng-container>
 
         <ng-container matColumnDef="failure">
@@ -169,15 +183,20 @@ import { OrderFormComponent } from '../order-form/order-form.component';
 })
 export class OrderListComponent implements OnInit {
   orders = signal<ServiceOrder[]>([]);
+  clients = signal<Client[]>([]);
   statusFilter = '';
+  clientId: number | '' = '';
   fromDate = '';
   toDate = '';
+
+  private readonly equipmentLabels = signal<Record<number, string>>({});
+  private readonly requestedEquipmentIds = new Set<number>();
 
   displayedColumns = [
     'number',
     'entry_date',
-    'client_id',
-    'equipment_id',
+    'client',
+    'equipment',
     'failure',
     'status',
     'actions',
@@ -190,11 +209,16 @@ export class OrderListComponent implements OnInit {
 
   constructor(
     private readonly orderService: ServiceOrderService,
+    private readonly clientService: ClientService,
+    private readonly equipmentService: EquipmentService,
     private readonly dialog: MatDialog,
     private readonly router: Router,
   ) {}
 
   ngOnInit(): void {
+    this.clientService.list().subscribe({
+      next: (list) => this.clients.set(list),
+    });
     this.loadOrders();
   }
 
@@ -202,12 +226,46 @@ export class OrderListComponent implements OnInit {
     this.orderService
       .list({
         status: (this.statusFilter as OrderStatus) || undefined,
+        clientId: this.clientId === '' ? undefined : Number(this.clientId),
         from: this.fromDate || undefined,
         to: this.toDate || undefined,
       })
       .subscribe({
-        next: (data) => this.orders.set(data),
+        next: (data) => {
+          this.orders.set(data);
+          this.loadEquipmentLabels(data);
+        },
       });
+  }
+
+  clientName(clientId: number): string {
+    const client = this.clients().find((c) => c.id === clientId);
+    return client ? `${client.first_name} ${client.last_name}` : `Cliente #${clientId}`;
+  }
+
+  equipmentLabel(equipmentId: number): string {
+    return this.equipmentLabels()[equipmentId] ?? `Equipo #${equipmentId}`;
+  }
+
+  private loadEquipmentLabels(orders: ServiceOrder[]): void {
+    const ids = [...new Set(orders.map((o) => o.equipment_id))];
+    for (const id of ids) {
+      if (this.requestedEquipmentIds.has(id)) continue;
+      this.requestedEquipmentIds.add(id);
+      this.equipmentService.get(id).subscribe({
+        next: (equipment) => this.setEquipmentLabel(id, this.describeEquipment(equipment)),
+        error: () => this.setEquipmentLabel(id, `Equipo #${id}`),
+      });
+    }
+  }
+
+  private describeEquipment(equipment: Equipment): string {
+    const base = `${equipment.brand}${equipment.model ? ' ' + equipment.model : ''}`.trim();
+    return equipment.serial_number ? `${base} (Serie: ${equipment.serial_number})` : base;
+  }
+
+  private setEquipmentLabel(id: number, label: string): void {
+    this.equipmentLabels.update((labels) => ({ ...labels, [id]: label }));
   }
 
   onFilterChange(): void {

@@ -34,7 +34,8 @@ npm start
 ```
 - Aplicación web: [http://localhost:4200](http://localhost:4200)
 - Swagger / Documentación API: [http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs)
-- Healthcheck API: [http://127.0.0.1:8000/api/v1/health](http://127.0.0.1:8000/api/v1/health)
+- Healthcheck raíz: [http://127.0.0.1:8000/health](http://127.0.0.1:8000/health)
+- Healthcheck versionado: [http://127.0.0.1:8000/api/v1/health](http://127.0.0.1:8000/api/v1/health)
 
 ---
 
@@ -111,7 +112,8 @@ npm start
    ```
    - La API quedará escuchando en `http://127.0.0.1:8000`.
    - Podés verificar el estado ingresando a:
-     - **Healthcheck:** `http://127.0.0.1:8000/api/v1/health`
+     - **Healthcheck raíz:** `http://127.0.0.1:8000/health`
+     - **Healthcheck versionado:** `http://127.0.0.1:8000/api/v1/health`
      - **Documentación Swagger UI:** `http://127.0.0.1:8000/docs`
      - **Documentación ReDoc:** `http://127.0.0.1:8000/redoc`
    - Para detener el servidor, presionar `Ctrl + C`.
@@ -149,7 +151,7 @@ npm start
   `ingresado → en_diagnostico → presupuestado → en_reparacion → listo → entregado` (terminal).
 - **Consumo de repuestos vs Venta:** El consumo de repuestos en órdenes descuenta stock registrando un movimiento de tipo `order_consumption` sin generar una venta comercial.
 - **Punto de Venta:** El carrito calcula el total de forma segura exclusivamente en el servidor al confirmar la venta.
-- **Zona Horaria:** Persistencia en UTC y filtrado/visualización bajo la zona horaria argentina (`America/Argentina/Buenos_Aires`).
+- **Zona Horaria:** Persistencia en UTC. El backend interpreta los filtros de fecha según la variable `TIMEZONE` (por defecto `America/Argentina/Buenos_Aires`). El frontend muestra las fechas con la zona horaria del navegador; no configura ni fuerza una zona horaria específica.
 
 ---
 
@@ -160,14 +162,14 @@ Desde el directorio `backend` con el entorno virtual activo:
 ```bash
 pytest -q
 ```
-*Ejecuta los 90 tests unitarios y de integración (validación de esquemas, stock no negativo, atocimidad de ventas, máquina de estados, límites de fecha y restricciones).*
+*Ejecuta los 91 tests unitarios y de integración (validación de esquemas, stock no negativo, atomicidad de ventas, máquina de estados, límites de fecha y restricciones).*
 
 ### Pruebas de Frontend (Vitest)
 Desde el directorio `frontend`:
 ```bash
 npm test -- --watch=false
 ```
-*Ejecuta los 20 tests unitarios de componentes, formularios reactivos, validadores y servicios.*
+*Ejecuta los 46 tests unitarios (17 archivos) de componentes, formularios reactivos, validadores y servicios.*
 
 ### Compilación de Producción del Frontend
 ```bash
@@ -188,4 +190,4 @@ npm run build
 | 5 | Consumo de repuesto en taller | Descuenta stock atómicamente y registra movimiento sin generar venta comercial | ✓ Verificado |
 | 6 | Cierre de orden | Pasa a `listo` y luego a `entregado` (estado terminal inmutable) | ✓ Verificado |
 | 7 | Punto de Venta | Venta de insumos/accesorios con validación atómica de stock y cálculo de total en servidor | ✓ Verificado |
-| 8 | Consulta por fechas | Filtro inclusivo de ventas y órdenes con cálculo de total acumulado | ✓ Verificado |
+| 8 | Consulta por fechas | Filtro inclusivo de fechas en ventas y órdenes; el historial de ventas muestra el total acumulado del período (las órdenes no muestran un total acumulado) | ✓ Verificado |
