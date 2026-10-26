@@ -110,11 +110,12 @@ export function atLeastOneContact(control: AbstractControl): ValidationErrors | 
       display: flex;
       flex-direction: column;
       gap: 0.5rem;
-      min-width: 20rem;
+      width: 100%;
+      min-width: min(20rem, 70vw);
       padding-top: 0.5rem;
     }
     .error-text {
-      color: var(--mat-sys-error, #ba1a1a);
+      color: var(--mat-sys-error, var(--app-danger));
       font-size: 0.85rem;
       margin: 0;
     }

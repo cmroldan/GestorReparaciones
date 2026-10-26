@@ -113,11 +113,12 @@ export interface OrderFormData {
       display: flex;
       flex-direction: column;
       gap: 0.5rem;
-      min-width: 25rem;
+      width: 100%;
+      min-width: min(25rem, 70vw);
       padding-top: 0.5rem;
     }
     .warn-hint {
-      color: var(--mat-sys-error, #ba1a1a);
+      color: var(--mat-sys-error, var(--app-danger));
     }
   `,
 })

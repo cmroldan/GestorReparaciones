@@ -33,14 +33,14 @@ import { ClientFormComponent } from '../client-form/client-form.component';
     <div class="client-detail-container">
       <div class="top-nav">
         <button mat-button routerLink="/clientes">
-          ← Volver a Clientes
+          <span aria-hidden="true">←</span> Volver a Clientes
         </button>
       </div>
 
       @if (client(); as c) {
-        <mat-card class="client-card">
+        <mat-card class="client-card panel">
           <mat-card-header>
-            <mat-card-title>{{ c.first_name }} {{ c.last_name }}</mat-card-title>
+            <mat-card-title class="client-title">{{ c.first_name }} {{ c.last_name }}</mat-card-title>
             <mat-card-subtitle>Cliente #{{ c.id }}</mat-card-subtitle>
           </mat-card-header>
           <mat-card-content class="client-info">
@@ -58,91 +58,126 @@ import { ClientFormComponent } from '../client-form/client-form.component';
 
         <div class="equipments-section">
           <div class="equipments-header">
-            <h2>Equipos Asociados</h2>
+            <div>
+              <h2>Equipos Asociados</h2>
+              <p class="page-subtitle">
+                Equipos recibidos y cantidad de órdenes registradas.
+              </p>
+            </div>
             <button mat-flat-button color="primary" (click)="openCreateEquipmentDialog(c.id)">
               Nuevo Equipo
             </button>
           </div>
 
-          <table mat-table [dataSource]="c.equipments" class="mat-elevation-z1 equipment-table">
-            <ng-container matColumnDef="type">
-              <th mat-header-cell *matHeaderCellDef>Tipo</th>
-              <td mat-cell *matCellDef="let eq">{{ getTypeLabel(eq.type) }}</td>
-            </ng-container>
+          <div class="panel table-panel">
+            <div class="table-scroll">
+              <table mat-table [dataSource]="c.equipments" class="equipment-table" aria-label="Equipos del cliente">
+                <ng-container matColumnDef="type">
+                  <th mat-header-cell *matHeaderCellDef>Tipo</th>
+                  <td mat-cell *matCellDef="let eq">{{ getTypeLabel(eq.type) }}</td>
+                </ng-container>
 
-            <ng-container matColumnDef="brand">
-              <th mat-header-cell *matHeaderCellDef>Marca</th>
-              <td mat-cell *matCellDef="let eq">{{ eq.brand }}</td>
-            </ng-container>
+                <ng-container matColumnDef="brand">
+                  <th mat-header-cell *matHeaderCellDef>Marca</th>
+                  <td mat-cell *matCellDef="let eq">{{ eq.brand }}</td>
+                </ng-container>
 
-            <ng-container matColumnDef="model">
-              <th mat-header-cell *matHeaderCellDef>Modelo</th>
-              <td mat-cell *matCellDef="let eq">{{ eq.model || '-' }}</td>
-            </ng-container>
+                <ng-container matColumnDef="model">
+                  <th mat-header-cell *matHeaderCellDef>Modelo</th>
+                  <td mat-cell *matCellDef="let eq">{{ eq.model || '-' }}</td>
+                </ng-container>
 
-            <ng-container matColumnDef="serial_number">
-              <th mat-header-cell *matHeaderCellDef>Nº Serie</th>
-              <td mat-cell *matCellDef="let eq">{{ eq.serial_number || '-' }}</td>
-            </ng-container>
+                <ng-container matColumnDef="serial_number">
+                  <th mat-header-cell *matHeaderCellDef>Nº Serie</th>
+                  <td mat-cell *matCellDef="let eq">{{ eq.serial_number || '-' }}</td>
+                </ng-container>
 
-            <ng-container matColumnDef="order_count">
-              <th mat-header-cell *matHeaderCellDef>Órdenes</th>
-              <td mat-cell *matCellDef="let eq">{{ eq.order_count }}</td>
-            </ng-container>
+                <ng-container matColumnDef="order_count">
+                  <th mat-header-cell *matHeaderCellDef>Órdenes</th>
+                  <td mat-cell *matCellDef="let eq">{{ eq.order_count }}</td>
+                </ng-container>
 
-            <ng-container matColumnDef="actions">
-              <th mat-header-cell *matHeaderCellDef>Acciones</th>
-              <td mat-cell *matCellDef="let eq">
-                <button mat-button (click)="openEditEquipmentDialog(eq)">
-                  Editar
-                </button>
-              </td>
-            </ng-container>
+                <ng-container matColumnDef="actions">
+                  <th mat-header-cell *matHeaderCellDef>Acciones</th>
+                  <td mat-cell *matCellDef="let eq">
+                    <button mat-button (click)="openEditEquipmentDialog(eq)">
+                      Editar
+                    </button>
+                  </td>
+                </ng-container>
 
-            <tr mat-header-row *matHeaderRowDef="equipmentColumns"></tr>
-            <tr mat-row *matRowDef="let row; columns: equipmentColumns"></tr>
+                <tr mat-header-row *matHeaderRowDef="equipmentColumns"></tr>
+                <tr mat-row *matRowDef="let row; columns: equipmentColumns"></tr>
 
-            <tr class="mat-row" *matNoDataRow>
-              <td class="mat-cell empty-cell" [attr.colspan]="equipmentColumns.length">
-                No hay equipos registrados para este cliente.
-              </td>
-            </tr>
-          </table>
+                <tr class="mat-row" *matNoDataRow>
+                  <td class="mat-cell empty-cell" [attr.colspan]="equipmentColumns.length">
+                    No hay equipos registrados para este cliente.
+                  </td>
+                </tr>
+              </table>
+            </div>
+          </div>
         </div>
       }
     </div>
   `,
   styles: `
     .client-detail-container {
-      padding: 1.5rem;
-      max-width: 75rem;
+      max-width: 1400px;
       margin: 0 auto;
     }
     .top-nav {
-      margin-bottom: 1rem;
+      margin-bottom: 0.5rem;
     }
     .client-card {
-      margin-bottom: 2rem;
+      margin-bottom: 1.5rem;
+      padding: 1.25rem 1.5rem;
     }
     .client-info {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(18rem, 1fr));
       gap: 0.5rem;
       padding-top: 1rem;
+    }
+    .client-info p {
+      margin: 0;
+      color: var(--app-text-muted);
+      font-size: 0.85rem;
+    }
+    .client-info strong {
+      color: var(--app-text);
+      font-weight: 600;
     }
     .equipments-header {
       display: flex;
       justify-content: space-between;
-      align-items: center;
+      align-items: flex-end;
+      gap: 1rem;
+      flex-wrap: wrap;
       margin-bottom: 1rem;
+    }
+    .equipments-header h2 {
+      margin: 0;
+      color: var(--app-text);
+      font-size: 1.1rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+    }
+    .page-subtitle {
+      margin: 0.3rem 0 0;
+      color: var(--app-text-muted);
+      font-size: 0.8rem;
+    }
+    .table-panel {
+      overflow: hidden;
     }
     .equipment-table {
       width: 100%;
     }
     .empty-cell {
-      padding: 2rem;
+      padding: 2.5rem;
+      color: var(--app-text-muted);
       text-align: center;
-      color: #666;
     }
   `,
 })

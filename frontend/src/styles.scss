@@ -1,4 +1,86 @@
-@use '@angular/material/prebuilt-themes/azure-blue.css';
+@use '@fontsource-variable/inter';
+@use '@angular/material' as mat;
+
+html {
+  color-scheme: dark;
+
+  @include mat.theme((
+    color: (
+      theme-type: dark,
+      primary: mat.$azure-palette,
+      tertiary: mat.$blue-palette,
+    ),
+    typography: (
+      plain-family: 'Inter Variable, Inter, system-ui, sans-serif',
+      brand-family: 'Inter Variable, Inter, system-ui, sans-serif',
+      bold-weight: 700,
+      medium-weight: 500,
+      regular-weight: 400,
+    ),
+    density: 0,
+  ));
+
+  @include mat.system-classes();
+}
+
+:root {
+  --app-bg: #020617;
+  --app-surface: #0f172a;
+  --app-surface-muted: #1e293b;
+  --app-surface-hover: #263449;
+  --app-border: rgb(148 163 184 / 16%);
+  --app-border-strong: rgb(148 163 184 / 28%);
+  --app-text: #f8fafc;
+  --app-text-muted: #94a3b8;
+  --app-text-subtle: #8494a9;
+  --app-accent: #2563eb;
+  --app-accent-strong: #3b82f6;
+  --app-accent-soft: rgb(37 99 235 / 16%);
+  --app-success: #34d399;
+  --app-success-soft: rgb(52 211 153 / 14%);
+  --app-warning: #fbbf24;
+  --app-warning-soft: rgb(251 191 36 / 14%);
+  --app-danger: #fb7185;
+  --app-danger-soft: rgb(251 113 133 / 14%);
+  --app-info: #38bdf8;
+  --app-info-soft: rgb(56 189 248 / 14%);
+  --app-radius-lg: 16px;
+  --app-radius-md: 12px;
+  --app-radius-sm: 8px;
+  --app-shadow: 0 18px 40px rgb(2 6 23 / 45%);
+  --app-font: 'Inter Variable', 'Inter', system-ui, sans-serif;
+
+  --mat-sys-background: var(--app-bg);
+  --mat-sys-on-background: var(--app-text);
+  --mat-sys-surface: var(--app-surface);
+  --mat-sys-on-surface: var(--app-text);
+  --mat-sys-surface-variant: var(--app-surface-muted);
+  --mat-sys-on-surface-variant: var(--app-text-muted);
+  --mat-sys-surface-container-lowest: #060b18;
+  --mat-sys-surface-container-low: #0b1324;
+  --mat-sys-surface-container: var(--app-surface);
+  --mat-sys-surface-container-high: var(--app-surface-muted);
+  --mat-sys-surface-container-highest: var(--app-surface-hover);
+  --mat-sys-outline: #475569;
+  --mat-sys-outline-variant: #1e293b;
+  --mat-sys-primary: var(--app-accent);
+  --mat-sys-on-primary: #eff6ff;
+  --mat-sys-primary-container: #1d4ed8;
+  --mat-sys-on-primary-container: #dbeafe;
+  --mat-sys-secondary-container: var(--app-surface-muted);
+  --mat-sys-on-secondary-container: var(--app-text);
+  --mat-sys-error: var(--app-danger);
+  --mat-sys-on-error: #450a0a;
+  --mat-sys-corner-extra-small: 4px;
+  --mat-sys-corner-small: 8px;
+  --mat-sys-corner-medium: 12px;
+  --mat-sys-corner-large: 16px;
+  --mat-sys-corner-extra-large: 20px;
+}
+
+* {
+  box-sizing: border-box;
+}
 
 html,
 body {
@@ -7,5 +89,345 @@ body {
 
 body {
   margin: 0;
-  font-family: Roboto, 'Helvetica Neue', sans-serif;
+  background: var(--app-bg);
+  color: var(--app-text);
+  font-family: var(--app-font);
+  -webkit-font-smoothing: antialiased;
 }
+
+app-root {
+  display: block;
+  min-height: 100%;
+}
+
+::selection {
+  background: var(--app-accent);
+  color: #eff6ff;
+}
+
+:focus-visible {
+  outline: 2px solid var(--app-accent-strong);
+  outline-offset: 2px;
+}
+
+.cdk-overlay-container {
+  --mat-dialog-container-color: var(--app-surface);
+  --mat-dialog-subhead-color: var(--app-text);
+  --mat-dialog-supporting-text-color: var(--app-text-muted);
+  --mat-menu-container-color: var(--app-surface);
+  --mat-select-panel-background-color: var(--app-surface);
+  --mat-autocomplete-background-color: var(--app-surface);
+  --mat-snack-bar-container-color: var(--app-surface-muted);
+  --mat-snack-bar-supporting-text-color: var(--app-text);
+  --mat-snack-bar-button-color: var(--app-accent-strong);
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #334155;
+  border: 3px solid var(--app-bg);
+  border-radius: 999px;
+}
+
+/* Primitivas visuales compartidas */
+
+.panel {
+  background: var(--app-surface);
+  border: 1px solid var(--app-border);
+  border-radius: var(--app-radius-lg);
+  box-shadow: var(--app-shadow);
+}
+
+.panel-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1.25rem 1.5rem 0;
+}
+
+.panel-title {
+  margin: 0;
+  color: var(--app-text);
+  font-size: 1rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.panel-subtitle {
+  margin: 0.25rem 0 0;
+  color: var(--app-text-muted);
+  font-size: 0.8rem;
+}
+
+.panel-body {
+  padding: 1.25rem 1.5rem 1.5rem;
+}
+
+.metric-card {
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+  padding: 1.35rem 1.5rem;
+  background: var(--app-surface);
+  border: 1px solid var(--app-border);
+  border-radius: var(--app-radius-lg);
+  box-shadow: var(--app-shadow);
+}
+
+.metric-card::after {
+  content: '';
+  position: absolute;
+  inset: auto -2rem -3rem auto;
+  width: 8rem;
+  height: 8rem;
+  border-radius: 999px;
+  background: var(--app-accent-soft);
+  filter: blur(28px);
+  pointer-events: none;
+}
+
+.metric-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  border-radius: var(--app-radius-md);
+  background: var(--app-accent-soft);
+  color: var(--app-accent-strong);
+}
+
+.metric-label {
+  margin: 0;
+  color: var(--app-text-muted);
+  font-size: 0.8rem;
+  font-weight: 500;
+}
+
+.metric-value {
+  margin: 0.2rem 0 0;
+  color: var(--app-text);
+  font-size: clamp(1.6rem, 2.4vw, 2rem);
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  line-height: 1.1;
+}
+
+.metric-hint {
+  margin: 0;
+  color: var(--app-text-muted);
+  font-size: 0.75rem;
+}
+
+.table-scroll {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.data-table,
+.mat-mdc-table {
+  width: 100%;
+  background: transparent;
+}
+
+.mat-mdc-header-row {
+  background: transparent;
+}
+
+.mat-mdc-header-cell {
+  color: var(--app-text-muted);
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  border-bottom-color: var(--app-border);
+}
+
+.mat-mdc-cell {
+  color: var(--app-text);
+  border-bottom-color: var(--app-border);
+}
+
+.mat-mdc-row:last-child .mat-mdc-cell {
+  border-bottom: 0;
+}
+
+.mat-mdc-row:hover {
+  background: rgb(148 163 184 / 4%);
+}
+
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.2rem 0.65rem;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  background: var(--app-surface-hover);
+  color: var(--app-text-muted);
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+}
+
+.status-badge[data-status='ingresado'] {
+  background: var(--app-info-soft);
+  border-color: rgb(56 189 248 / 30%);
+  color: #7dd3fc;
+}
+
+.status-badge[data-status='en_diagnostico'] {
+  background: var(--app-warning-soft);
+  border-color: rgb(251 191 36 / 30%);
+  color: #fcd34d;
+}
+
+.status-badge[data-status='presupuestado'] {
+  background: rgb(168 85 247 / 14%);
+  border-color: rgb(168 85 247 / 30%);
+  color: #d8b4fe;
+}
+
+.status-badge[data-status='en_reparacion'] {
+  background: var(--app-accent-soft);
+  border-color: rgb(59 130 246 / 30%);
+  color: #93c5fd;
+}
+
+.status-badge[data-status='listo'] {
+  background: var(--app-success-soft);
+  border-color: rgb(52 211 153 / 30%);
+  color: #6ee7b7;
+}
+
+.status-badge[data-status='entregado'] {
+  background: rgb(148 163 184 / 12%);
+  border-color: rgb(148 163 184 / 20%);
+  color: var(--app-text-muted);
+}
+
+.status-badge[data-stock='out'] {
+  background: var(--app-danger-soft);
+  border-color: rgb(251 113 133 / 30%);
+  color: #fda4af;
+}
+
+.status-badge[data-stock='low'] {
+  background: var(--app-warning-soft);
+  border-color: rgb(251 191 36 / 30%);
+  color: #fcd34d;
+}
+
+.status-badge[data-stock='ok'] {
+  background: var(--app-success-soft);
+  border-color: rgb(52 211 153 / 30%);
+  color: #6ee7b7;
+}
+
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  padding: 2.5rem 1.5rem;
+  text-align: center;
+  color: var(--app-text-muted);
+}
+
+.empty-state-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  border-radius: 999px;
+  background: var(--app-surface-muted);
+  color: var(--app-text-muted);
+}
+
+.empty-state-title {
+  margin: 0;
+  color: var(--app-text);
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
+.empty-state-text {
+  margin: 0;
+  max-width: 24rem;
+  font-size: 0.85rem;
+  line-height: 1.5;
+}
+
+.muted {
+  color: var(--app-text-muted);
+}
+
+.text-success {
+  color: var(--app-success);
+}
+
+.text-warning {
+  color: var(--app-warning);
+}
+
+.text-danger {
+  color: var(--app-danger);
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.mat-mdc-card {
+  background: var(--app-surface);
+  border: 1px solid var(--app-border);
+  border-radius: var(--app-radius-lg);
+  color: var(--app-text);
+}
+
+mat-card-title.mat-mdc-card-title {
+  color: var(--app-text);
+  font-size: 1rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.mat-mdc-card-subtitle {
+  color: var(--app-text-muted);
+  font-size: 0.8rem;
+}
+
+mat-card-title.mat-mdc-card-title.client-title {
+  font-size: 1.35rem;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+}
+
+.mat-mdc-dialog-surface {
+  background: var(--app-surface);
+  border: 1px solid var(--app-border);
+  border-radius: var(--app-radius-lg);
+}
+
